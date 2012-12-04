@@ -28,6 +28,12 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
     
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    
     if (nil != self.localPath && [[NSFileManager defaultManager] fileExistsAtPath:self.localPath]) {
         self.imageView.localPath = self.localPath;
     } else {
