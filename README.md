@@ -1,4 +1,4 @@
 ALImageView
 ===========
 
-a ImageView Class for iOS
+A loaded asynchronously ImageView Class for iOS
