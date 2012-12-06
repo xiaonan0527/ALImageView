@@ -123,6 +123,18 @@
     }
 }
 
+- (void)setIsCorner:(BOOL)isCorner
+{
+    _isCorner = isCorner;
+    if (_isCorner) {
+        self.layer.cornerRadius = 10.0f;
+        self.clipsToBounds = YES;
+    } else {
+        self.layer.cornerRadius = 0.0f;
+        self.clipsToBounds = NO;
+    }
+}
+
 - (id)initWithFrame:(CGRect)frame
 {
     self = [super initWithFrame:frame];

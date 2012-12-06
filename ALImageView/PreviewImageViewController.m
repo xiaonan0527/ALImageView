@@ -102,7 +102,9 @@
     [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
     dispatch_block_t tempBlock = ^(void) {
         
-        //http request
+        //------------------ http -------------------
+        //  http request
+        //------------------ http -------------------
         
         for (int i=0; i<15; i++) {
             NSDictionary *dic = [NSDictionary dictionaryWithObjectsAndKeys:

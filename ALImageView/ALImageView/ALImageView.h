@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <QuartzCore/QuartzCore.h>
 
 #define ALImageViewQueuePriorityDefault  0
 #define ALImageViewQueuePriorityHigh  1
@@ -22,6 +23,7 @@
 @property (nonatomic, retain) NSString *cacheDirectory;
 @property (nonatomic, readwrite) BOOL asyncLoadImageFinished;
 @property (nonatomic, readwrite) NSInteger queuePriority;
+@property (nonatomic, readwrite) BOOL isCorner;
 
 - (void)asyncLoadImageWithURL:(NSURL *)url;
 
