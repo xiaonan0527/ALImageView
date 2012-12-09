@@ -24,7 +24,7 @@
 - (NSInteger)calculateCurrentPageIndex;
 - (NSInteger)calculateNextPageIndex;
 - (void)loadLocalImages:(ALContainerView *)containerView index:(NSInteger)index;
-- (void)setContainerViewCount:(NSInteger)index;
+- (void)reloadRemoteImages:(NSInteger)index;
 - (void)reloadRemoteImages:(ALContainerView *)containerView index:(NSInteger)index;
 
 @end
@@ -208,17 +208,17 @@
     NSInteger leftIndex = fromIndex;
     NSAssert(-PreviewImageViewControllerContainerImageCount <= leftIndex, @"-PreviewImageViewControllerContainerImageCount <= leftIndex error!");
     if (0 <= leftIndex) {   //显示第一屏的左边不用加载
-        [self setContainerViewCount:leftIndex];
+        [self reloadRemoteImages:leftIndex];
     }
     
     NSInteger centerIndex = [self calculateCurrentPageIndex];
     NSAssert(0 <= centerIndex, @"0 <= centerIndex error!");
-    [self setContainerViewCount:centerIndex];
+    [self reloadRemoteImages:centerIndex];
     
     NSInteger rightIndex = [self calculateNextPageIndex];
     NSAssert(PreviewImageViewControllerContainerImageCount <= rightIndex, @"PreviewImageViewControllerContainerImageCount <= rightIndex error!");
     if ([_imagePaths count] > rightIndex) {   //显示最后一屏的右边不用加载
-        [self setContainerViewCount:rightIndex];
+        [self reloadRemoteImages:rightIndex];
     }
     
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -256,7 +256,7 @@
     containerView.localPaths = localPaths;
 }
 
-- (void)setContainerViewCount:(NSInteger)index
+- (void)reloadRemoteImages:(NSInteger)index
 {
     ALContainerView *containerView = [_containerViews objectAtIndex:index/PreviewImageViewControllerContainerImageCount];
     if (index == containerView.fromIndex && nil != containerView.remotePaths) {
