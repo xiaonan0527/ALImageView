@@ -218,6 +218,11 @@
                     }
                     _asyncLoadImageFinished = YES;
                     [_activityView stopAnimating];
+                    
+                    if ([_delegate respondsToSelector:@selector(alImageView:didAsynchronousLoadImage:)]) {
+                        [_delegate alImageView:self didAsynchronousLoadImage:img];
+                    }
+                    
                     NSLog(@"asyncLoadImage finish!");
                 }
             } else {

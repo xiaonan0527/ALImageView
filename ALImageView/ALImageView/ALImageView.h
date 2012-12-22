@@ -12,6 +12,14 @@
 #define ALImageViewQueuePriorityDefault  0
 #define ALImageViewQueuePriorityHigh  1
 
+@class ALImageView;
+@protocol ALImageViewDelegate <NSObject>
+
+@optional
+- (void)alImageView:(ALImageView *)imgView didAsynchronousLoadImage:(UIImage *)img;
+
+@end
+
 
 @interface ALImageView : UIImageView
 
@@ -24,6 +32,8 @@
 @property (nonatomic, readwrite) BOOL asyncLoadImageFinished;
 @property (nonatomic, readwrite) NSInteger queuePriority;
 @property (nonatomic, readwrite) BOOL isCorner;
+
+@property (nonatomic, assign) id<NSObject, ALImageViewDelegate> delegate;
 
 - (void)asyncLoadImageWithURL:(NSURL *)url;
 

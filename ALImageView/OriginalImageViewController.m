@@ -40,6 +40,7 @@
         self.imageView.cacheDirectory = ALImageViewCacheDirectoryForDemo;
         self.imageView.localPath = self.thumbnailPath;
         self.imageView.remotePath = self.remotePath;
+        self.imageView.delegate = self;
     }
 }
 
@@ -47,6 +48,14 @@
 {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+}
+
+#pragma mark -
+#pragma mark ALImageViewDelegate
+
+- (void)alImageView:(ALImageView *)imgView didAsynchronousLoadImage:(UIImage *)img
+{
+    NSLog(@"alImageView: %@ didAsynchronousLoadImage: %@", imgView, img);
 }
 
 @end

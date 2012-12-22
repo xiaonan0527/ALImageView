@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "ALImageView.h"
 
-@interface OriginalImageViewController : UIViewController
+@interface OriginalImageViewController : UIViewController<ALImageViewDelegate>
 
 @property (nonatomic, retain) IBOutlet ALImageView *imageView;
 @property (nonatomic, retain) NSString *thumbnailPath;
