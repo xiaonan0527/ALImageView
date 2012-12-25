@@ -53,9 +53,9 @@
 #pragma mark -
 #pragma mark ALImageViewDelegate
 
-- (void)alImageView:(ALImageView *)imgView didAsynchronousLoadImage:(UIImage *)img
+- (void)imageView:(ALImageView *)imgView didAsynchronousLoadImage:(UIImage *)img
 {
-    NSLog(@"alImageView: %@ didAsynchronousLoadImage: %@", imgView, img);
+    NSLog(@"imageView: %@ didAsynchronousLoadImage: %@", imgView, img);
 }
 
 @end

@@ -16,7 +16,7 @@
 @protocol ALImageViewDelegate <NSObject>
 
 @optional
-- (void)alImageView:(ALImageView *)imgView didAsynchronousLoadImage:(UIImage *)img;
+- (void)imageView:(ALImageView *)imgView didAsynchronousLoadImage:(UIImage *)img;
 
 @end
 

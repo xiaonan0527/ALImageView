@@ -219,8 +219,8 @@
                     _asyncLoadImageFinished = YES;
                     [_activityView stopAnimating];
                     
-                    if ([_delegate respondsToSelector:@selector(alImageView:didAsynchronousLoadImage:)]) {
-                        [_delegate alImageView:self didAsynchronousLoadImage:img];
+                    if ([_delegate respondsToSelector:@selector(imageView:didAsynchronousLoadImage:)]) {
+                        [_delegate imageView:self didAsynchronousLoadImage:img];
                     }
                     
                     NSLog(@"asyncLoadImage finish!");
