@@ -35,9 +35,10 @@
                 int i = 0;
                 for (NSString *l in _localPaths) {
                     if (0 < [l length]) {
-                        ALImageView *view = [_imageViews objectAtIndex:i++];
+                        ALImageView *view = [_imageViews objectAtIndex:i];
                         view.localPath = l;
                     }
+                    i++;
                 }
             }
         });
@@ -65,10 +66,11 @@
                 int i = 0;
                 for (NSString *r in _remotePaths) {
                     if (0 < [r length]) {
-                        ALImageView *view = [_imageViews objectAtIndex:i++];
+                        ALImageView *view = [_imageViews objectAtIndex:i];
                         view.remotePath = r;
                         view.cacheDirectory = _imageCacheDirectory;
                     }
+                    i++;
                 }
             }
         });
