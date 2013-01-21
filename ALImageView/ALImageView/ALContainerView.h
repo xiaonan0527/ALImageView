@@ -8,8 +8,8 @@
 
 #import <UIKit/UIKit.h>
 
-#define ALContainerViewColumnCount     2
-#define ALContainerViewRowCount     2
+#define ALContainerViewColumnCount     1
+#define ALContainerViewRowCount     1
 
 @class ALContainerView;
 typedef void (^CSelectIndexBlock)(ALContainerView *cView, NSInteger index);

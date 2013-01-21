@@ -26,10 +26,10 @@
         [_localPaths release];
         _localPaths = nil;
     }
-    
+
     if (nil != localPaths) {
         _localPaths = [localPaths retain];
-        
+
         dispatch_async(dispatch_get_main_queue(), ^{
             if (nil != _localPaths) {
                 int i = 0;
@@ -42,7 +42,6 @@
                 }
             }
         });
-        
     }
 }
 
@@ -74,7 +73,6 @@
                 }
             }
         });
-        
     }
 }
 

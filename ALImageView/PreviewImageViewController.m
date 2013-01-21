@@ -11,7 +11,7 @@
 #import "OriginalImageViewController.h"
 
 #define PageCount(t_num, p_num)  (t_num%p_num ? (t_num/p_num+1) : t_num/p_num)
-#define PreviewImageViewControllerContainerImageCount      (ALContainerViewColumnCount+ALContainerViewRowCount)
+#define PreviewImageViewControllerContainerImageCount      (ALContainerViewColumnCount*ALContainerViewRowCount)
 
 @interface PreviewImageViewController ()
 {
@@ -151,7 +151,6 @@
         NSString *tempPath = [dic objectForKey:@"RemotePreview"];
         originalImageVC.thumbnailPath = [ALImageViewCacheDirectoryForDemo stringByAppendingFormat:@"/%@", [tempPath lastPathComponent]];
         tempPath = [dic objectForKey:@"RemoteOriginal"];
-//        originalImageVC.localPath = [ALImageViewCacheDirectoryForDemo stringByAppendingFormat:@"/%@", [tempPath lastPathComponent]];
         originalImageVC.remotePath = tempPath;
         [self.navigationController pushViewController:originalImageVC animated:YES];
         [originalImageVC release];
@@ -174,27 +173,32 @@
         imageContainerView.remotePaths = nil;
         [imageContainerView release];
     }
+    for (int i=0; i<[_containerViews count]; i++) {
+        ALContainerView *imageContainerView = [_containerViews objectAtIndex:i];
+        if (PageCount([_imagePaths count], PreviewImageViewControllerContainerImageCount) > i) {
+            imageContainerView.tag = 1;
+        } else {
+            imageContainerView.tag = -1;
+        }
+    }
     
     dispatch_async(dispatch_get_main_queue(), ^{
-        for (int i=0; i<[_containerViews count]; i++) {
-            ALContainerView *imageContainerView = [_containerViews objectAtIndex:i];
-            if (PageCount([_imagePaths count], PreviewImageViewControllerContainerImageCount) > i) {
+        for (ALContainerView *imageContainerView in _containerViews) {
+            if (imageContainerView.tag == 1) {
                 imageContainerView.hidden = NO;
             } else {
                 imageContainerView.hidden = YES;
             }
         }
-        
         _scrollView.contentInset = UIEdgeInsetsMake(0.f, 0.f, 0.f, 0.f);
         _scrollView.contentSize = CGSizeMake(PageCount([_imagePaths count], PreviewImageViewControllerContainerImageCount)*bounds.size.width, bounds.size.height);
         _scrollView.contentOffset = CGPointMake(0.f, 0.f);
-        
         [self updatePageNumber];   //更新翻页的数字
     });
     
     int i = 0;
     for (ALContainerView *imageContainerView in _containerViews) {
-        if (!imageContainerView.hidden) {
+        if (1 == imageContainerView.tag) {
             [self loadLocalImages:imageContainerView index:i*PreviewImageViewControllerContainerImageCount];
             i++;
         }
