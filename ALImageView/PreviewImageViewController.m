@@ -73,13 +73,13 @@
         _fromIndex = -PreviewImageViewControllerContainerImageCount;
     }
 
+    [self getImagePathsFromServer];
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
     
-    [self getImagePathsFromServer];
 }
 
 - (void)didReceiveMemoryWarning
@@ -100,22 +100,30 @@
 - (void)getImagePathsFromServer
 {
     [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
+    UIActivityIndicatorView *activityView = [[[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray] autorelease];
+    activityView.center = self.view.center;
+    [activityView startAnimating];
+    [self.view addSubview:activityView];
+    
     dispatch_block_t tempBlock = ^(void) {
         
-        //------------------ http -------------------
-        //  http request
-        //------------------ http -------------------
+        NSURL *url = [NSURL URLWithString:@"http://www.springox.com/app_store.php"];
+        NSData *resData = [NSData dataWithContentsOfURL:url];
+        NSDictionary *resDic = [NSJSONSerialization JSONObjectWithData:resData options:NSJSONReadingMutableContainers error:nil];
+        NSLog(@"resDic : %@", resDic);
         
-        for (int i=0; i<15; i++) {
-            NSDictionary *dic = [NSDictionary dictionaryWithObjectsAndKeys:
-                                 @"http://allseeing-i.com/ASIHTTPRequest/tests/images/small-image.jpg", @"RemotePreview",
-                                 @"http://allseeing-i.com/ASIHTTPRequest/tests/images/large-image.jpg", @"RemoteOriginal",
-                                 nil];
-            [_imagePaths addObject:dic];
+        for (NSDictionary *dic in [resDic objectForKey:@"images"]) {
+            NSDictionary *imgDic = [NSDictionary dictionaryWithObjectsAndKeys:
+                                      [dic objectForKey:@"preview"], @"RemotePreview",
+                                      [dic objectForKey:@"original"], @"RemoteOriginal",
+                                      nil];
+            [_imagePaths addObject:imgDic];
         }
         
         dispatch_async(dispatch_get_main_queue(), ^{
             [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
+            [activityView stopAnimating];
+            [activityView removeFromSuperview];
             [self layoutContainerViews];
         });
         
@@ -147,7 +155,7 @@
     CSelectIndexBlock block = ^(ALContainerView *icView, NSInteger index) {
         NSLog(@"block didSelectIndex:%d", icView.fromIndex+index);
         OriginalImageViewController *originalImageVC = [[OriginalImageViewController alloc] init];
-        NSDictionary *dic = [_imagePaths objectAtIndex:index];
+        NSDictionary *dic = [_imagePaths objectAtIndex:icView.fromIndex+index];
         NSString *tempPath = [dic objectForKey:@"RemotePreview"];
         originalImageVC.thumbnailPath = [ALImageViewCacheDirectoryForDemo stringByAppendingFormat:@"/%@", [tempPath lastPathComponent]];
         tempPath = [dic objectForKey:@"RemoteOriginal"];

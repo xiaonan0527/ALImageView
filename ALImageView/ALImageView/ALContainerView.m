@@ -122,11 +122,11 @@
     if (_imageCount > 0) {
         int columns = ALContainerViewColumnCount;
         int rows = ALContainerViewRowCount;
-        CGFloat xLR = 18.f;
-        CGFloat yU = 20.f;
-        CGFloat yD = 32.f;
-        CGFloat xGap = 10.f;
-        CGFloat yGap = 6.f;
+        CGFloat xLR = 20.f;
+        CGFloat yU = 70.f;
+        CGFloat yD = 70.f;
+        CGFloat xGap = 20.f;
+        CGFloat yGap = 16.f;
         CGFloat width = (self.bounds.size.width-2*xLR-(columns-1)*xGap)/columns;
         CGFloat height = (self.bounds.size.height-yU-yD-(rows-1)*yGap)/rows;
         NSLog(@"width:%f height:%f", width, height);
