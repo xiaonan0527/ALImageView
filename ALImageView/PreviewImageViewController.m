@@ -107,7 +107,7 @@
     
     dispatch_block_t tempBlock = ^(void) {
         
-        NSURL *url = [NSURL URLWithString:@"http://www.springox.com/app_store.php"];
+        NSURL *url = [NSURL URLWithString:@"http://api.springox.com/app_store.php"];
         NSData *resData = [NSData dataWithContentsOfURL:url];
         NSDictionary *resDic = [NSJSONSerialization JSONObjectWithData:resData options:NSJSONReadingMutableContainers error:nil];
         NSLog(@"resDic : %@", resDic);
