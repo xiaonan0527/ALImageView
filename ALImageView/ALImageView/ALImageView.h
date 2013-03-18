@@ -24,14 +24,14 @@
 @interface ALImageView : UIImageView
 
 @property (nonatomic, retain) UIImage *bgImage;
-@property (nonatomic, readwrite) NSInteger index;
+@property (nonatomic, assign) NSInteger index;
 @property (nonatomic, retain) NSString *thumbnailPath;
 @property (nonatomic, retain) NSString *localPath;
 @property (nonatomic, retain) NSString *remotePath;
 @property (nonatomic, retain) NSString *cacheDirectory;
-@property (nonatomic, readwrite) BOOL asyncLoadImageFinished;
-@property (nonatomic, readwrite) NSInteger queuePriority;
-@property (nonatomic, readwrite) BOOL isCorner;
+@property (nonatomic, assign) BOOL asyncLoadImageFinished;
+@property (nonatomic, assign) NSInteger queuePriority;
+@property (nonatomic, assign) BOOL isCorner;
 
 @property (nonatomic, assign) id<NSObject, ALImageViewDelegate> delegate;
 
