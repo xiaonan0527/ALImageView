@@ -35,7 +35,7 @@
 
 + (NSString *)localDirectory;
 
-- (void)loadRemoteImage:(NSString *)remotePath placeholderImage:(UIImage *)placeholderImage;
+- (void)loadImage:(NSString *)remotePath placeholderImage:(UIImage *)placeholderImage;
 
 - (void)addTarget:(id)target action:(SEL)action;
 

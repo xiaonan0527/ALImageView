@@ -34,7 +34,7 @@
 {
     [super viewWillAppear:animated];
     
-    [self.imageView loadRemoteImage:self.remotePath placeholderImage:nil];
+    [self.imageView loadImage:self.remotePath placeholderImage:nil];
     self.imageView.delegate = self;
 }
 
