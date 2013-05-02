@@ -33,7 +33,7 @@
 
 @property (nonatomic, assign) id<NSObject, ALImageViewDelegate> delegate;
 
-+ (NSString *)cacheDirectory;
++ (NSString *)localDirectory;
 
 - (void)asyncLoadImageWithURL:(NSURL *)url;
 

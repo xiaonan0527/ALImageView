@@ -56,8 +56,6 @@
 
 @end
 
-static dispatch_queue_t imageQueue;
-
 @implementation ALImageView
 
 - (void)setPlaceholderImage:(UIImage *)placeholderImage
@@ -94,7 +92,18 @@ static dispatch_queue_t imageQueue;
     }
     
     if (0 < [_remotePath length]) {
-        NSString *imgCachePath = [[ALImageView cacheDirectory] stringByAppendingPathComponent:[_remotePath lastPathComponent]];
+        UIImage *img = [[ALImageCache sharedInstance] cachedImageForRemotePath:_remotePath];
+        if (nil != img) {
+            if (nil != _placeholderImage) {
+                self.image = [self insertBgImage:_placeholderImage toImage:img];
+            } else {
+                self.image = img;
+                self.backgroundColor = [UIColor whiteColor];
+            }
+            NSLog(@"load cache image!");
+            return;
+        }
+        NSString *imgCachePath = [[ALImageView localDirectory] stringByAppendingPathComponent:[_remotePath lastPathComponent]];
         if ([[NSFileManager defaultManager] fileExistsAtPath:imgCachePath]) {
             UIImage *img = [UIImage imageWithContentsOfFile:imgCachePath];
             if (nil != _placeholderImage) {
@@ -103,7 +112,8 @@ static dispatch_queue_t imageQueue;
                 self.image = img;
                 self.backgroundColor = [UIColor whiteColor];
             }
-            NSLog(@"load cache image!");
+            [[ALImageCache sharedInstance] cacheImage:img forRemotePath:_remotePath];
+            NSLog(@"load local image!");
             return;
         }
         [self asyncLoadImageWithURL:[NSURL URLWithString:[_remotePath stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]]];
@@ -122,24 +132,25 @@ static dispatch_queue_t imageQueue;
     }
 }
 
-+ (NSString *)cacheDirectory
++ (NSString *)localDirectory
 {    
-    static NSString *_cacheDirectory = nil;
+    static NSString *_localDirectory = nil;
     static dispatch_once_t oncePredicate;
     dispatch_once(&oncePredicate, ^{
         NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
         NSString *cachesPath = ([paths count] > 0) ? [paths objectAtIndex:0] : nil;
         if (0 < [cachesPath length]) {
-            _cacheDirectory = [[cachesPath stringByAppendingPathComponent:@"ALImages"] retain];
+            _localDirectory = [[cachesPath stringByAppendingPathComponent:@"ALImages"] retain];
+            
             BOOL isDirectory = YES;
-            if (![[NSFileManager defaultManager] fileExistsAtPath:_cacheDirectory isDirectory:&isDirectory] || !isDirectory) {
+            if (![[NSFileManager defaultManager] fileExistsAtPath:_localDirectory isDirectory:&isDirectory] || !isDirectory) {
                 NSError *error = nil;
-                [[NSFileManager defaultManager] createDirectoryAtPath:_cacheDirectory withIntermediateDirectories:YES attributes:nil error:&error];
+                [[NSFileManager defaultManager] createDirectoryAtPath:_localDirectory withIntermediateDirectories:YES attributes:nil error:&error];
             }
         }
-        NSLog(@"cacheDirectory %@", _cacheDirectory);
+        NSLog(@"localDirectory %@", _localDirectory);
     });
-    return _cacheDirectory;
+    return _localDirectory;
 }
 
 - (id)initWithFrame:(CGRect)frame
@@ -208,7 +219,7 @@ static dispatch_queue_t imageQueue;
         
         dispatch_async(dispatch_get_main_queue(), ^{
             if (nil != data) {
-                NSString *targetPath = [[ALImageView cacheDirectory] stringByAppendingPathComponent:[[url absoluteString] lastPathComponent]];
+                NSString *targetPath = [[ALImageView localDirectory] stringByAppendingPathComponent:[[url absoluteString] lastPathComponent]];
                 NSError *error = nil;
                 [data writeToFile:targetPath options:NSDataWritingFileProtectionMask error:&error];
                 NSLog(@"asyncLoadImage targetPath:%@ error:%@", targetPath, error);
@@ -226,6 +237,8 @@ static dispatch_queue_t imageQueue;
                         [_delegate imageView:self didAsynchronousLoadImage:img];
                     }
                     
+                    [[ALImageCache sharedInstance] cacheImage:img forRemotePath:[url absoluteString]];
+                    
                     NSLog(@"asyncLoadImage finish!");
                 }
             } else {
@@ -240,6 +253,8 @@ static dispatch_queue_t imageQueue;
     } else if (ALImageViewQueuePriorityNormal == _queuePriority) {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), loadImageBlock);
     } else {
+        static dispatch_queue_t imageQueue = NULL;
+        
         if (NULL == imageQueue) {
             imageQueue = dispatch_queue_create("asynchronous_load_image", nil);
         }
