@@ -9,8 +9,10 @@
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>
 
-#define ALImageViewQueuePriorityDefault  0
-#define ALImageViewQueuePriorityHigh  1
+#define ALImageViewQueuePriorityLow    1
+#define ALImageViewQueuePriorityNormal  2
+#define ALImageViewQueuePriorityHigh  3
+
 
 @class ALImageView;
 @protocol ALImageViewDelegate <NSObject>
@@ -20,20 +22,18 @@
 
 @end
 
-
 @interface ALImageView : UIImageView
 
-@property (nonatomic, retain) UIImage *bgImage;
+@property (nonatomic, retain) UIImage *placeholderImage;
 @property (nonatomic, assign) NSInteger index;
-@property (nonatomic, retain) NSString *thumbnailPath;
-@property (nonatomic, retain) NSString *localPath;
 @property (nonatomic, retain) NSString *remotePath;
-@property (nonatomic, retain) NSString *cacheDirectory;
 @property (nonatomic, assign) BOOL asyncLoadImageFinished;
 @property (nonatomic, assign) NSInteger queuePriority;
 @property (nonatomic, assign) BOOL isCorner;
 
 @property (nonatomic, assign) id<NSObject, ALImageViewDelegate> delegate;
+
++ (NSString *)cacheDirectory;
 
 - (void)asyncLoadImageWithURL:(NSURL *)url;
 

@@ -34,14 +34,8 @@
 {
     [super viewWillAppear:animated];
     
-    if (nil != self.localPath && [[NSFileManager defaultManager] fileExistsAtPath:self.localPath]) {
-        self.imageView.localPath = self.localPath;
-    } else {
-        self.imageView.cacheDirectory = ALImageViewCacheDirectoryForDemo;
-        self.imageView.localPath = self.thumbnailPath;
-        self.imageView.remotePath = self.remotePath;
-        self.imageView.delegate = self;
-    }
+    self.imageView.remotePath = self.remotePath;
+    self.imageView.delegate = self;
 }
 
 - (void)didReceiveMemoryWarning

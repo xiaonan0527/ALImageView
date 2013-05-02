@@ -8,6 +8,42 @@
 
 #import "ALImageView.h"
 
+@interface ALImageCache : NSCache
+
++ (ALImageCache *)sharedInstance;
+
+- (UIImage *)cachedImageForRemotePath:(NSString *)path;
+
+- (void)cacheImage:(UIImage *)image forRemotePath:(NSString *)path;
+
+@end
+
+@implementation ALImageCache
+
++ (ALImageCache *)sharedInstance {
+    static ALImageCache *_imageCache = nil;
+    static dispatch_once_t oncePredicate;
+    dispatch_once(&oncePredicate, ^{
+        _imageCache = [[ALImageCache alloc] init];
+    });
+    return _imageCache;
+}
+
+- (UIImage *)cachedImageForRemotePath:(NSString *)path
+{
+	return [self objectForKey:path];
+}
+
+- (void)cacheImage:(UIImage *)image forRemotePath:(NSString *)path
+{
+    if (image && path) {
+        [self setObject:image forKey:path];
+    }
+}
+
+@end
+
+
 @interface ALImageView ()
 {
     UIActivityIndicatorView *_activityView;
@@ -20,76 +56,34 @@
 
 @end
 
-//static dispatch_queue_t imageQueue;
+static dispatch_queue_t imageQueue;
 
 @implementation ALImageView
 
-- (void)setBgImage:(UIImage *)bgImage
+- (void)setPlaceholderImage:(UIImage *)placeholderImage
 {
-    if (nil != _bgImage) {
-        [_bgImage release];
-        _bgImage = nil;
+    if (_placeholderImage == placeholderImage) {
+        return;
     }
     
-    if (nil != bgImage) {
-        _bgImage = [bgImage retain];
+    if (nil != _placeholderImage) {
+        [_placeholderImage release];
+        _placeholderImage = nil;
     }
     
-    self.image = _bgImage;
-}
-
-- (void)setThumbnailPath:(NSString *)thumbnailPath
-{
-    if (nil != _thumbnailPath) {
-        self.image = nil;
-        [_thumbnailPath release];
-        _thumbnailPath = nil;
+    if (nil != placeholderImage) {
+        _placeholderImage = [placeholderImage retain];
     }
     
-    if (nil != thumbnailPath) {
-        _thumbnailPath = [thumbnailPath retain];
-    }
-    
-    if (nil != _thumbnailPath && 0 < [_thumbnailPath length]) {
-        UIImage *img = [UIImage imageWithContentsOfFile:_thumbnailPath];
-        if (nil != img) {
-            if (nil != _bgImage) {
-                self.image = [self insertBgImage:_bgImage toImage:img];
-            } else {
-                self.image = img;
-                self.backgroundColor = [UIColor whiteColor];
-            }
-        }
-    }
-}
-
-- (void)setLocalPath:(NSString *)localPath
-{
-    if (nil != _localPath) {
-        self.image = nil;
-        [_localPath release];
-        _localPath = nil;
-    }
-    
-    if (nil != localPath) {
-        _localPath = [localPath retain];
-    }
-    
-    if (nil != _localPath && 0 < [_localPath length]) {
-        UIImage *img = [UIImage imageWithContentsOfFile:_localPath];
-        if (nil != img) {
-            if (nil != _bgImage) {
-                self.image = [self insertBgImage:_bgImage toImage:img];
-            } else {
-                self.image = img;
-                self.backgroundColor = [UIColor whiteColor];
-            }
-        }
-    }
+    self.image = _placeholderImage;
 }
 
 - (void)setRemotePath:(NSString *)remotePath
 {
+    if (_remotePath == remotePath) {
+        return;
+    }
+    
     if (nil != _remotePath) {
         [_remotePath release];
         _remotePath = nil;
@@ -99,27 +93,20 @@
         _remotePath = [remotePath retain];
     }
     
-    if (nil != _remotePath && 0 < [_remotePath length]) {
-        [self asyncLoadImageWithURL:[NSURL URLWithString:[_remotePath stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]]];
-    }
-}
-
-- (void)setCacheDirectory:(NSString *)cacheDirectory
-{
-    if (nil != _cacheDirectory) {
-        [_cacheDirectory release];
-        _cacheDirectory = nil;
-    }
-    
-    if (nil != cacheDirectory) {
-        _cacheDirectory = [cacheDirectory retain];
-    }
-    
-    if (nil != _cacheDirectory) {
-        BOOL isDirectory;
-        if (![[NSFileManager defaultManager] fileExistsAtPath:_cacheDirectory isDirectory:&isDirectory] || !isDirectory) {
-            [[NSFileManager defaultManager] createDirectoryAtPath:_cacheDirectory withIntermediateDirectories:YES attributes:nil error:nil];
+    if (0 < [_remotePath length]) {
+        NSString *imgCachePath = [[ALImageView cacheDirectory] stringByAppendingPathComponent:[_remotePath lastPathComponent]];
+        if ([[NSFileManager defaultManager] fileExistsAtPath:imgCachePath]) {
+            UIImage *img = [UIImage imageWithContentsOfFile:imgCachePath];
+            if (nil != _placeholderImage) {
+                self.image = [self insertBgImage:_placeholderImage toImage:img];
+            } else {
+                self.image = img;
+                self.backgroundColor = [UIColor whiteColor];
+            }
+            NSLog(@"load cache image!");
+            return;
         }
+        [self asyncLoadImageWithURL:[NSURL URLWithString:[_remotePath stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]]];
     }
 }
 
@@ -135,21 +122,40 @@
     }
 }
 
++ (NSString *)cacheDirectory
+{    
+    static NSString *_cacheDirectory = nil;
+    static dispatch_once_t oncePredicate;
+    dispatch_once(&oncePredicate, ^{
+        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
+        NSString *cachesPath = ([paths count] > 0) ? [paths objectAtIndex:0] : nil;
+        if (0 < [cachesPath length]) {
+            _cacheDirectory = [[cachesPath stringByAppendingPathComponent:@"ALImages"] retain];
+            BOOL isDirectory = YES;
+            if (![[NSFileManager defaultManager] fileExistsAtPath:_cacheDirectory isDirectory:&isDirectory] || !isDirectory) {
+                NSError *error = nil;
+                [[NSFileManager defaultManager] createDirectoryAtPath:_cacheDirectory withIntermediateDirectories:YES attributes:nil error:&error];
+            }
+        }
+        NSLog(@"cacheDirectory %@", _cacheDirectory);
+    });
+    return _cacheDirectory;
+}
+
 - (id)initWithFrame:(CGRect)frame
 {
     self = [super initWithFrame:frame];
     if (self) {
         // Initialization code
         _index = -UINT_MAX;
+        _queuePriority = ALImageViewQueuePriorityHigh;
     }
     return self;
 }
 
 - (void)dealloc
 {
-    self.localPath = nil;
     self.remotePath = nil;
-    self.cacheDirectory = nil;
     if (nil != _activityView) {
         [_activityView stopAnimating];
         [_activityView release];
@@ -181,7 +187,7 @@
 - (void)asyncLoadImageWithURL:(NSURL *)url
 {
     if (nil == _activityView) {
-        if (nil == _bgImage) {
+        if (nil == _placeholderImage) {
             _activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
         } else {
             _activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
@@ -199,20 +205,17 @@
         NSURLResponse *response = nil;
         NSError *error = nil;
         NSData *data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
-        NSString *remoteLastPath = [_remotePath lastPathComponent];
         
         dispatch_async(dispatch_get_main_queue(), ^{
             if (nil != data) {
-                if (nil != _cacheDirectory) {
-                    NSError *error = nil;
-                    NSString *targetPath = [NSString stringWithFormat:@"%@/%@", _cacheDirectory, remoteLastPath];
-                    [data writeToFile:targetPath options:NSDataWritingFileProtectionMask error:&error];
-                    NSLog(@"asyncLoadImage targetPath:%@ error:%@", targetPath, error);
-                }
+                NSString *targetPath = [[ALImageView cacheDirectory] stringByAppendingPathComponent:[[url absoluteString] lastPathComponent]];
+                NSError *error = nil;
+                [data writeToFile:targetPath options:NSDataWritingFileProtectionMask error:&error];
+                NSLog(@"asyncLoadImage targetPath:%@ error:%@", targetPath, error);
                 if (countStamp == _requestCount) {   //该计数是为了对象被复用重新加载图片的时候，旧的block能在效果上等效被cancel
                     UIImage *img = [UIImage imageWithData:data];
-                    if (nil != _bgImage) {
-                        self.image = [self insertBgImage:_bgImage toImage:img];
+                    if (nil != _placeholderImage) {
+                        self.image = [self insertBgImage:_placeholderImage toImage:img];
                     } else {
                         self.image = img;
                     }
@@ -232,17 +235,15 @@
         });
     };
     
-//    if (NULL == imageQueue) {
-//        NSLog(@"create imageQueue!!!!!!!!!");
-//        imageQueue = dispatch_queue_create("asynchronous_load_image", nil);
-//    }
-//    
-//    dispatch_async(imageQueue, loadImageBlock);
-    
     if (ALImageViewQueuePriorityHigh == _queuePriority) {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), loadImageBlock);
-    } else {
+    } else if (ALImageViewQueuePriorityNormal == _queuePriority) {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), loadImageBlock);
+    } else {
+        if (NULL == imageQueue) {
+            imageQueue = dispatch_queue_create("asynchronous_load_image", nil);
+        }
+        dispatch_async(imageQueue, loadImageBlock);
     }
 }
 

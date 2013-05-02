@@ -9,7 +9,6 @@
 #import "ALContainerView.h"
 #import "ALImageView.h"
 
-
 @interface ALContainerView ()
 {
     NSMutableArray *_imageViews;
@@ -20,33 +19,12 @@
 
 @implementation ALContainerView
 
-- (void)setLocalPaths:(NSArray *)localPaths
-{
-    if (nil != _localPaths) {
-        [_localPaths release];
-        _localPaths = nil;
-    }
-
-    if (nil != localPaths) {
-        _localPaths = [localPaths retain];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (nil != _localPaths) {
-                int i = 0;
-                for (NSString *l in _localPaths) {
-                    if (0 < [l length]) {
-                        ALImageView *view = [_imageViews objectAtIndex:i];
-                        view.localPath = l;
-                    }
-                    i++;
-                }
-            }
-        });
-    }
-}
-
 - (void)setRemotePaths:(NSArray *)remotePaths
 {
+    if (remotePaths == _remotePaths) {
+        return;
+    }
+    
     if (nil != _remotePaths) {
         [_remotePaths release];
         _remotePaths = nil;
@@ -55,11 +33,6 @@
     if (nil != remotePaths) {
         _remotePaths = [remotePaths retain];
         
-        if (nil == _imageCacheDirectory) {
-            _imageCacheDirectory = ALImageViewCacheDirectoryForDemo;
-            [_imageCacheDirectory retain];
-        }
-        
         dispatch_async(dispatch_get_main_queue(), ^{
             if (nil != _remotePaths) {
                 int i = 0;
@@ -67,7 +40,6 @@
                     if (0 < [r length]) {
                         ALImageView *view = [_imageViews objectAtIndex:i];
                         view.remotePath = r;
-                        view.cacheDirectory = _imageCacheDirectory;
                     }
                     i++;
                 }
@@ -88,7 +60,6 @@
 
 - (void)dealloc
 {
-    self.localPaths = nil;
     self.remotePaths = nil;
     if (nil != _imageViews) {
         [_imageViews release];
@@ -97,10 +68,6 @@
     if (nil != _selectIndexBlock) {
         [_selectIndexBlock release];
         _selectIndexBlock = nil;
-    }
-    if (nil != _imageCacheDirectory) {
-        [_imageCacheDirectory release];
-        _imageCacheDirectory = nil;
     }
     [super dealloc];
 }
@@ -148,7 +115,7 @@
                     alImageView = [[_imageViews objectAtIndex:i+columns*j] retain];
                 } else {
                     alImageView = [[ALImageView alloc] initWithFrame:CGRectMake(xLR+(xGap+width)*i, yU+(yGap+height)*j, width, height)];
-                    alImageView.bgImage = [UIImage imageNamed:@"img_bg"];
+                    alImageView.placeholderImage = [UIImage imageNamed:@"img_pld"];
                     alImageView.index = i+j*columns;
                     [alImageView addTarget:self action:@selector(didPressImageViewAction:)];
                     [_imageViews addObject:alImageView];

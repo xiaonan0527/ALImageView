@@ -23,7 +23,6 @@
 
 - (NSInteger)calculateCurrentPageIndex;
 - (NSInteger)calculateNextPageIndex;
-- (void)loadLocalImages:(ALContainerView *)containerView index:(NSInteger)index;
 - (void)reloadRemoteImages:(NSInteger)index;
 - (void)reloadRemoteImages:(ALContainerView *)containerView index:(NSInteger)index;
 
@@ -157,7 +156,6 @@
         OriginalImageViewController *originalImageVC = [[OriginalImageViewController alloc] init];
         NSDictionary *dic = [_imagePaths objectAtIndex:icView.fromIndex+index];
         NSString *tempPath = [dic objectForKey:@"RemotePreview"];
-        originalImageVC.thumbnailPath = [ALImageViewCacheDirectoryForDemo stringByAppendingFormat:@"/%@", [tempPath lastPathComponent]];
         tempPath = [dic objectForKey:@"RemoteOriginal"];
         originalImageVC.remotePath = tempPath;
         [self.navigationController pushViewController:originalImageVC animated:YES];
@@ -177,7 +175,6 @@
             [_containerViews addObject:imageContainerView];
             [_scrollView addSubview:imageContainerView];
         }
-        imageContainerView.localPaths = nil;
         imageContainerView.remotePaths = nil;
         [imageContainerView release];
     }
@@ -207,7 +204,12 @@
     int i = 0;
     for (ALContainerView *imageContainerView in _containerViews) {
         if (1 == imageContainerView.tag) {
-            [self loadLocalImages:imageContainerView index:i*PreviewImageViewControllerContainerImageCount];
+            NSInteger index = i*PreviewImageViewControllerContainerImageCount;
+            if (index+PreviewImageViewControllerContainerImageCount >= [_imagePaths count]) {
+                [imageContainerView setImageCount:[_imagePaths count]-index fromIndex:index];
+            } else {
+                [imageContainerView setImageCount:PreviewImageViewControllerContainerImageCount fromIndex:index];
+            }
             i++;
         }
     }
@@ -238,36 +240,6 @@
     });
 }
 
-- (void)loadLocalImages:(ALContainerView *)containerView index:(NSInteger)index
-{
-    if (index+PreviewImageViewControllerContainerImageCount >= [_imagePaths count]) {
-        [containerView setImageCount:[_imagePaths count]-index fromIndex:index];
-    } else {   //大于三屏时fromIndex为变量
-        [containerView setImageCount:PreviewImageViewControllerContainerImageCount fromIndex:index];
-    }
-    
-    if (0 == containerView.imageCount) {
-        return;
-    }
-    NSMutableArray *localPaths = [NSMutableArray array];
-    NSInteger mixIndex = containerView.fromIndex;
-    NSInteger maxIndex = containerView.fromIndex+containerView.imageCount;
-    NSAssert(0 <= mixIndex, @"mixIndex error!");
-    NSAssert([_imagePaths count] >= maxIndex, @"maxIndex error!");
-    NSLog(@"mixIndex:%d maxIndex:%d", mixIndex, maxIndex);
-    for (int i=mixIndex; i<maxIndex; i++) {
-        NSDictionary *d = [_imagePaths objectAtIndex:i];
-        NSString *localPreview = [d objectForKey:@"LocalPreview"];
-        if ([[NSFileManager defaultManager] fileExistsAtPath:localPreview]) {
-            [localPaths addObject:localPreview];
-        } else {
-            [localPaths addObject:@""];
-        }
-    }
-    NSLog(@"localPaths:%@", localPaths);
-    containerView.localPaths = localPaths;
-}
-
 - (void)reloadRemoteImages:(NSInteger)index
 {
     ALContainerView *containerView = [_containerViews objectAtIndex:index/PreviewImageViewControllerContainerImageCount];
@@ -290,13 +262,8 @@
     NSLog(@"mixIndex:%d maxIndex:%d", mixIndex, maxIndex);
     for (int i=mixIndex; i<maxIndex; i++) {
         NSDictionary *d = [_imagePaths objectAtIndex:i];
-        NSString *localPreview = [d objectForKey:@"LocalPreview"];
         NSString *remotePreview = [d objectForKey:@"RemotePreview"];
-        if ([[NSFileManager defaultManager] fileExistsAtPath:localPreview]) {
-            [remotePaths addObject:@""];
-        } else {
-            [remotePaths addObject:remotePreview];
-        }
+        [remotePaths addObject:remotePreview];
     }
     containerView.remotePaths = remotePaths;
 }
