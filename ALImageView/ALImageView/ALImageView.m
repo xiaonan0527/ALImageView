@@ -46,6 +46,7 @@
 
 @interface ALImageView ()
 {
+    UIImage *_placeholderImage;
     UIActivityIndicatorView *_activityView;
     id _target;
     SEL _action;
@@ -193,6 +194,12 @@
     UIImage *resultingImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     return resultingImage;
+}
+
+- (void)loadRemoteImage:(NSString *)remotePath placeholderImage:(UIImage *)placeholderImage
+{
+    self.placeholderImage = placeholderImage;
+    self.remotePath = remotePath;
 }
 
 - (void)asyncLoadImageWithURL:(NSURL *)url
