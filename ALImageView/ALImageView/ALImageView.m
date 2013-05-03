@@ -101,12 +101,7 @@
     if (0 < [_remotePath length]) {
         UIImage *img = [[ALImageCache sharedInstance] cachedImageForRemotePath:_remotePath];
         if (nil != img) {
-            if (nil != _placeholderImage) {
-                self.image = [self insertBgImage:_placeholderImage toImage:img];
-            } else {
-                self.image = img;
-                self.backgroundColor = [UIColor whiteColor];
-            }
+            [self setImageWithAnimation:img];
             NSLog(@"load memory cache image!");
             return;
         }
@@ -114,12 +109,7 @@
             NSString *imgCachePath = [[ALImageView localCacheDirectory] stringByAppendingPathComponent:[_remotePath lastPathComponent]];
             if ([[NSFileManager defaultManager] fileExistsAtPath:imgCachePath]) {
                 UIImage *img = [UIImage imageWithContentsOfFile:imgCachePath];
-                if (nil != _placeholderImage) {
-                    self.image = [self insertBgImage:_placeholderImage toImage:img];
-                } else {
-                    self.image = img;
-                    self.backgroundColor = [UIColor whiteColor];
-                }
+                [self setImageWithAnimation:img];
                 [[ALImageCache sharedInstance] cacheImage:img forRemotePath:_remotePath];
                 NSLog(@"load local cache image!");
                 return;
@@ -209,6 +199,25 @@
 }
 */
 
+- (void)setImageWithAnimation:(UIImage *)img
+{
+    if (nil != _placeholderImage) {
+        self.image = [self insertBgImage:_placeholderImage toImage:img];
+    } else {
+        self.image = img;
+        self.backgroundColor = [UIColor whiteColor];
+    }
+    
+    self.alpha = 0.3f;
+    [UIView animateWithDuration:0.6f
+                          delay:0.2f
+                        options:UIViewAnimationOptionCurveEaseIn
+                     animations:^{
+                         self.alpha = 1.f;
+                     }
+                     completion:nil];
+}
+
 - (UIImage *)insertBgImage:(UIImage *)bgImage toImage:(UIImage *)image
 {
     CGFloat s = [UIScreen mainScreen].scale;
@@ -264,11 +273,7 @@
             if (0 < [data length]) {
                 if (countStamp == _requestCount) {   //该计数是为了对象被复用重新加载图片的时候，旧的block能在效果上等效被cancel
                     UIImage *img = [UIImage imageWithData:data];
-                    if (nil != _placeholderImage) {
-                        self.image = [self insertBgImage:_placeholderImage toImage:img];
-                    } else {
-                        self.image = img;
-                    }
+                    [self setImageWithAnimation:img];
                     _asyncLoadImageFinished = YES;
                     [_activityView stopAnimating];
                     

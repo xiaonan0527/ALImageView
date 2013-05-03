@@ -109,14 +109,16 @@
     dispatch_block_t tempBlock = ^(void) {
         NSURL *url = [NSURL URLWithString:@"http://api.springox.com/app_store.php"];
         NSData *resData = [NSData dataWithContentsOfURL:url];
-        NSDictionary *resDic = [NSJSONSerialization JSONObjectWithData:resData options:NSJSONReadingMutableContainers error:nil];
-        NSLog(@"resDic : %@", resDic);
         
-        for (NSDictionary *dic in [resDic objectForKey:@"images"]) {
-            NSDictionary *imgDic = [NSDictionary dictionaryWithObjectsAndKeys:
-                                      [dic objectForKey:@"preview"], @"RemotePreview",
-                                      [dic objectForKey:@"original"], @"RemoteOriginal", nil];
-            [blockPaths addObject:imgDic];
+        if (0 < [resData length]) {
+            NSDictionary *resDic = [NSJSONSerialization JSONObjectWithData:resData options:NSJSONReadingMutableContainers error:nil];
+            NSLog(@"resDic : %@", resDic);
+            for (NSDictionary *dic in [resDic objectForKey:@"images"]) {
+                NSDictionary *imgDic = [NSDictionary dictionaryWithObjectsAndKeys:
+                                        [dic objectForKey:@"preview"], @"RemotePreview",
+                                        [dic objectForKey:@"original"], @"RemoteOriginal", nil];
+                [blockPaths addObject:imgDic];
+            }
         }
         
         dispatch_async(dispatch_get_main_queue(), ^{
