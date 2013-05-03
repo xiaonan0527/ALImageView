@@ -150,7 +150,7 @@
         NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
         NSString *cachesPath = ([paths count] > 0) ? [paths objectAtIndex:0] : nil;
         if (0 < [cachesPath length]) {
-            _localCacheDirectory = [[cachesPath stringByAppendingPathComponent:@"ALImages"] retain];
+            _localCacheDirectory = [[cachesPath stringByAppendingPathComponent:AL_IMAGE_VIEW_LOCAL_CAHCE_DIRECTORY] retain];
             
             BOOL isDirectory = YES;
             if (![[NSFileManager defaultManager] fileExistsAtPath:_localCacheDirectory isDirectory:&isDirectory] || !isDirectory) {

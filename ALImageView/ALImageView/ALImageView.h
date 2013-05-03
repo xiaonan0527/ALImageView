@@ -13,6 +13,8 @@
 #define AL_IMAGE_VIEW_QUEUE_PRIORITY_NORMAL  2
 #define AL_IMAGE_VIEW_QUEUE_PRIORITY_HIGH  3
 
+#define AL_IMAGE_VIEW_LOCAL_CAHCE_DIRECTORY   @"ALImages"
+
 
 @class ALImageView;
 @protocol ALImageViewDelegate <NSObject>

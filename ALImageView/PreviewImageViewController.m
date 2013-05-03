@@ -39,8 +39,6 @@
 
 - (void)dealloc
 {
-    NSLog(@"%s previewcontroller %d self.navigationController : %d", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
-    
     self.scrollView = nil;
     self.pageNumLabel = nil;
     if (nil != _containerViews) {
@@ -106,7 +104,6 @@
     activityView.center = self.view.center;
     [activityView startAnimating];
     [self.view addSubview:activityView];
-    NSLog(@"%s previewcontroller %d self.navigationController : %d", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
     
     NSMutableArray *blockPaths = _imagePaths;
     dispatch_block_t tempBlock = ^(void) {
@@ -168,7 +165,7 @@
     if (nil == _containerViews) {
         _containerViews = [[NSMutableArray alloc] init];
     }
-    NSLog(@"%s previewcontroller %d self.navigationController : %d", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
+
     int tempCount = [_containerViews count];
     for (int i=0; i<PageCount([_imagePaths count], PreviewImageViewControllerContainerImageCount); i++) {
         ALContainerView *imageContainerView = nil;
@@ -203,7 +200,6 @@
     _scrollView.contentSize = CGSizeMake(PageCount([_imagePaths count], PreviewImageViewControllerContainerImageCount)*bounds.size.width, bounds.size.height);
     _scrollView.contentOffset = CGPointMake(0.f, 0.f);
     [self updatePageNumber];   //更新翻页的数字
-    NSLog(@"%s previewcontroller %d self.navigationController : %d", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
     
     int i = 0;
     for (ALContainerView *imageContainerView in _containerViews) {
