@@ -92,13 +92,13 @@
     self.fromIndex = index;
     
     if (_imageCount > 0) {
-        int columns = ALContainerViewColumnCount;
-        int rows = ALContainerViewRowCount;
-        CGFloat xLR = 20.f;
-        CGFloat yU = 70.f;
-        CGFloat yD = 70.f;
-        CGFloat xGap = 20.f;
-        CGFloat yGap = 16.f;
+        int columns = AL_CONTAINER_VIEW_COLUMN_COUNT;
+        int rows = AL_CONTAINER_VIEW_ROW_COUNT;
+        CGFloat xLR = AL_CONTAINER_VIEW_MARGIN_LR;
+        CGFloat yU = AL_CONTAINER_VIEW_MARGIN_UP;
+        CGFloat yD = AL_CONTAINER_VIEW_MARGIN_DOWN;
+        CGFloat xGap = AL_CONTAINER_VIEW_GAP_X;
+        CGFloat yGap = AL_CONTAINER_VIEW_GAP_Y;
         CGFloat width = (self.bounds.size.width-2*xLR-(columns-1)*xGap)/columns;
         CGFloat height = (self.bounds.size.height-yU-yD-(rows-1)*yGap)/rows;
         NSLog(@"width:%f height:%f", width, height);

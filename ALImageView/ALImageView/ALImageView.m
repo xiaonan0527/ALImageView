@@ -186,7 +186,7 @@
 - (void)commonInit
 {
     _index = -UINT_MAX;
-    _queuePriority = ALImageViewQueuePriorityHigh;
+    _queuePriority = AL_IMAGE_VIEW_QUEUE_PRIORITY_HIGH;
     _localCacheEnabled = YES;
 }
 
@@ -290,9 +290,9 @@
         });
     };
     
-    if (ALImageViewQueuePriorityHigh == _queuePriority) {
+    if (AL_IMAGE_VIEW_QUEUE_PRIORITY_HIGH == _queuePriority) {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), loadImageBlock);
-    } else if (ALImageViewQueuePriorityNormal == _queuePriority) {
+    } else if (AL_IMAGE_VIEW_QUEUE_PRIORITY_NORMAL == _queuePriority) {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), loadImageBlock);
     } else {
         static dispatch_queue_t imageQueue = NULL;

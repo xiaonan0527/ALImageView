@@ -9,9 +9,9 @@
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>
 
-#define ALImageViewQueuePriorityLow    1
-#define ALImageViewQueuePriorityNormal  2
-#define ALImageViewQueuePriorityHigh  3
+#define AL_IMAGE_VIEW_QUEUE_PRIORITY_LOW    1
+#define AL_IMAGE_VIEW_QUEUE_PRIORITY_NORMAL  2
+#define AL_IMAGE_VIEW_QUEUE_PRIORITY_HIGH  3
 
 
 @class ALImageView;

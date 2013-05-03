@@ -10,7 +10,7 @@
 #import "OriginalImageViewController.h"
 
 #define PageCount(t_num, p_num)  (t_num%p_num ? (t_num/p_num+1) : t_num/p_num)
-#define PreviewImageViewControllerContainerImageCount      (ALContainerViewColumnCount*ALContainerViewRowCount)
+#define PreviewImageViewControllerContainerImageCount      (AL_CONTAINER_VIEW_COLUMN_COUNT*AL_CONTAINER_VIEW_ROW_COUNT)
 
 @interface PreviewImageViewController ()
 {

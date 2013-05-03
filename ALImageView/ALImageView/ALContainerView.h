@@ -8,8 +8,14 @@
 
 #import <UIKit/UIKit.h>
 
-#define ALContainerViewColumnCount     2
-#define ALContainerViewRowCount     3
+#define AL_CONTAINER_VIEW_COLUMN_COUNT     2
+#define AL_CONTAINER_VIEW_ROW_COUNT     3
+
+#define AL_CONTAINER_VIEW_MARGIN_LR    20.f     //左右边界
+#define AL_CONTAINER_VIEW_MARGIN_UP     20.f    //上边界
+#define AL_CONTAINER_VIEW_MARGIN_DOWN   40.f    //下边界
+#define AL_CONTAINER_VIEW_GAP_X    20.f         //水平间距
+#define AL_CONTAINER_VIEW_GAP_Y    16.f         //垂直间距
 
 @class ALContainerView;
 typedef void (^CSelectIndexBlock)(ALContainerView *cView, NSInteger index);
