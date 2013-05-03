@@ -42,7 +42,7 @@
 {
     [super viewWillAppear:animated];
     
-    [self.imageView loadImage:self.path placeholderImage:nil];
+    [self.imageView loadImage:self.path placeholderImage:[UIImage imageNamed:@"img_pld"]];
     self.imageView.delegate = self;
 }
 

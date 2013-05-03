@@ -234,7 +234,7 @@
         NSError *error = nil;
         NSData *data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (nil == error && 0 < [data length]) {  // 测试说明有可能正常返回data长度为空
+            if (nil == error && 0 < [data length]) {  //测试说明有可能正常返回data长度为空
                 NSString *targetPath = [[ALImageView localDirectory] stringByAppendingPathComponent:[[url absoluteString] lastPathComponent]];
                 NSError *error = nil;
                 [data writeToFile:targetPath options:NSDataWritingFileProtectionComplete error:&error];
@@ -258,7 +258,10 @@
                     NSLog(@"asyncLoadImage finish!");
                 }
             } else {
+                self.image = [UIImage imageNamed:@"img_pld_err"];
+                _asyncLoadImageFinished = NO;
                 [_activityView stopAnimating];
+                
                 NSLog(@"asyncLoadImage finish without setImage!");
             }
         });
