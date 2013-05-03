@@ -23,6 +23,14 @@
     return self;
 }
 
+- (void)dealloc
+{
+    self.imageView = nil;
+    self.thumbnailPath = nil;
+    self.path = nil;
+    [super dealloc];
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
@@ -34,7 +42,7 @@
 {
     [super viewWillAppear:animated];
     
-    [self.imageView loadImage:self.remotePath placeholderImage:nil];
+    [self.imageView loadImage:self.path placeholderImage:nil];
     self.imageView.delegate = self;
 }
 

@@ -13,7 +13,6 @@
 
 @property (nonatomic, retain) IBOutlet ALImageView *imageView;
 @property (nonatomic, retain) NSString *thumbnailPath;
-@property (nonatomic, retain) NSString *localPath;
-@property (nonatomic, retain) NSString *remotePath;
+@property (nonatomic, retain) NSString *path;
 
 @end

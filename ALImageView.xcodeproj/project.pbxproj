@@ -294,11 +294,13 @@
 		5406344B166B64B2001B0257 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "iPhone Developer: chang wang (TCKD9P8FK2)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ALImageView/ALImageView-Prefix.pch";
 				INFOPLIST_FILE = "ALImageView/ALImageView-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 4.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "B23226F4-90F2-47E0-A850-420688167DF0";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;

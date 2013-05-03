@@ -7,7 +7,6 @@
 //
 
 #import "PreviewImageViewController.h"
-#import "ALContainerView.h"
 #import "OriginalImageViewController.h"
 
 #define PageCount(t_num, p_num)  (t_num%p_num ? (t_num/p_num+1) : t_num/p_num)
@@ -16,7 +15,6 @@
 @interface PreviewImageViewController ()
 {
     NSMutableArray *_containerViews;
-    
     NSMutableArray *_imagePaths;
     NSInteger _fromIndex;
 }
@@ -41,6 +39,8 @@
 
 - (void)dealloc
 {
+    NSLog(@"%s previewcontroller %d self.navigationController : %d", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
+    
     self.scrollView = nil;
     self.pageNumLabel = nil;
     if (nil != _containerViews) {
@@ -71,7 +71,7 @@
         _imagePaths = [[NSMutableArray alloc] init];
         _fromIndex = -PreviewImageViewControllerContainerImageCount;
     }
-
+    
     [self getImagePathsFromServer];
 }
 
@@ -79,6 +79,7 @@
 {
     [super viewWillAppear:animated];
     
+    NSLog(@"%s previewcontroller %d self.navigationController : %d", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
 }
 
 - (void)didReceiveMemoryWarning
@@ -94,6 +95,8 @@
     } else {
         [self dismissModalViewControllerAnimated:YES];
     }
+    
+    NSLog(@"%s previewcontroller %d self.navigationController : %d", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
 }
 
 - (void)getImagePathsFromServer
@@ -103,9 +106,10 @@
     activityView.center = self.view.center;
     [activityView startAnimating];
     [self.view addSubview:activityView];
+    NSLog(@"%s previewcontroller %d self.navigationController : %d", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
     
+    NSMutableArray *blockPaths = _imagePaths;
     dispatch_block_t tempBlock = ^(void) {
-        
         NSURL *url = [NSURL URLWithString:@"http://api.springox.com/app_store.php"];
         NSData *resData = [NSData dataWithContentsOfURL:url];
         NSDictionary *resDic = [NSJSONSerialization JSONObjectWithData:resData options:NSJSONReadingMutableContainers error:nil];
@@ -114,9 +118,8 @@
         for (NSDictionary *dic in [resDic objectForKey:@"images"]) {
             NSDictionary *imgDic = [NSDictionary dictionaryWithObjectsAndKeys:
                                       [dic objectForKey:@"preview"], @"RemotePreview",
-                                      [dic objectForKey:@"original"], @"RemoteOriginal",
-                                      nil];
-            [_imagePaths addObject:imgDic];
+                                      [dic objectForKey:@"original"], @"RemoteOriginal", nil];
+            [blockPaths addObject:imgDic];
         }
         
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -125,7 +128,6 @@
             [activityView removeFromSuperview];
             [self layoutContainerViews];
         });
-        
     };
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), tempBlock);
 }
@@ -151,19 +153,22 @@
     CGFloat y = 0.f;
     CGFloat width = bounds.size.width;
     CGFloat height = bounds.size.height;
-    CSelectIndexBlock block = ^(ALContainerView *icView, NSInteger index) {
-        NSLog(@"block didSelectIndex:%d", icView.fromIndex+index);
-        OriginalImageViewController *originalImageVC = [[OriginalImageViewController alloc] init];
-        NSDictionary *dic = [_imagePaths objectAtIndex:icView.fromIndex+index];
-        NSString *tempPath = [dic objectForKey:@"RemotePreview"];
-        tempPath = [dic objectForKey:@"RemoteOriginal"];
-        originalImageVC.remotePath = tempPath;
-        [self.navigationController pushViewController:originalImageVC animated:YES];
-        [originalImageVC release];
-    };
+    NSLog(@"%s previewcontroller %d self.navigationController : %d", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
+    
+    // Block这里的回调会对self形成强引用（retain），而self间接对Block同样是强引用的，造成对象间的互相强引用，内存泄露
+//    NSMutableArray *blockPaths = _imagePaths;
+//    CSelectIndexBlock block = ^(ALContainerView *icView, NSInteger index) {
+//        NSLog(@"block didSelectIndex:%d", icView.fromIndex+index);
+//        OriginalImageViewController *originalImageVC = [[[OriginalImageViewController alloc] init] autorelease];
+//        NSDictionary *dic = [blockPaths objectAtIndex:icView.fromIndex+index];
+//        originalImageVC.remotePath = [dic objectForKey:@"RemoteOriginal"];
+//        [self.navigationController pushViewController:originalImageVC animated:YES];
+//    };
+    
     if (nil == _containerViews) {
         _containerViews = [[NSMutableArray alloc] init];
     }
+    NSLog(@"%s previewcontroller %d self.navigationController : %d", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
     int tempCount = [_containerViews count];
     for (int i=0; i<PageCount([_imagePaths count], PreviewImageViewControllerContainerImageCount); i++) {
         ALContainerView *imageContainerView = nil;
@@ -171,11 +176,11 @@
             imageContainerView = [[_containerViews objectAtIndex:i] retain];
         } else {
             imageContainerView = [[ALContainerView alloc] initWithFrame:CGRectMake(i*width+x, y, width, height)];
-            [imageContainerView setSelectIndexBlock:block];
+//            [imageContainerView setSelectIndexBlock:block];
+            imageContainerView.delegate = self;
             [_containerViews addObject:imageContainerView];
             [_scrollView addSubview:imageContainerView];
         }
-        imageContainerView.remotePaths = nil;
         [imageContainerView release];
     }
     for (int i=0; i<[_containerViews count]; i++) {
@@ -187,19 +192,18 @@
         }
     }
     
-    dispatch_async(dispatch_get_main_queue(), ^{
-        for (ALContainerView *imageContainerView in _containerViews) {
-            if (imageContainerView.tag == 1) {
-                imageContainerView.hidden = NO;
-            } else {
-                imageContainerView.hidden = YES;
-            }
+    for (ALContainerView *imageContainerView in _containerViews) {
+        if (imageContainerView.tag == 1) {
+            imageContainerView.hidden = NO;
+        } else {
+            imageContainerView.hidden = YES;
         }
-        _scrollView.contentInset = UIEdgeInsetsMake(0.f, 0.f, 0.f, 0.f);
-        _scrollView.contentSize = CGSizeMake(PageCount([_imagePaths count], PreviewImageViewControllerContainerImageCount)*bounds.size.width, bounds.size.height);
-        _scrollView.contentOffset = CGPointMake(0.f, 0.f);
-        [self updatePageNumber];   //更新翻页的数字
-    });
+    }
+    _scrollView.contentInset = UIEdgeInsetsMake(0.f, 0.f, 0.f, 0.f);
+    _scrollView.contentSize = CGSizeMake(PageCount([_imagePaths count], PreviewImageViewControllerContainerImageCount)*bounds.size.width, bounds.size.height);
+    _scrollView.contentOffset = CGPointMake(0.f, 0.f);
+    [self updatePageNumber];   //更新翻页的数字
+    NSLog(@"%s previewcontroller %d self.navigationController : %d", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
     
     int i = 0;
     for (ALContainerView *imageContainerView in _containerViews) {
@@ -235,9 +239,7 @@
         [self reloadRemoteImages:rightIndex];
     }
     
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self updatePageNumber];   //更新翻页的数字
-    });
+    [self updatePageNumber];   //更新翻页的数字
 }
 
 - (void)reloadRemoteImages:(NSInteger)index
@@ -295,6 +297,19 @@
     } else {
         // do nothing
     }
+}
+
+#pragma mark -
+#pragma mark ALContainerViewDelegate
+
+- (void)containerView:(ALContainerView *)cView didSelectIndex:(NSInteger)index
+{
+    NSLog(@"didSelectIndex:%d", cView.fromIndex+index);
+    OriginalImageViewController *originalImageVC = [[OriginalImageViewController alloc] init];
+    NSDictionary *dic = [_imagePaths objectAtIndex:cView.fromIndex+index];
+    originalImageVC.path = [dic objectForKey:@"RemoteOriginal"];
+    [self.navigationController pushViewController:originalImageVC animated:YES];
+    [originalImageVC release];
 }
 
 @end

@@ -22,8 +22,8 @@
 
 + (ALImageCache *)sharedInstance {
     static ALImageCache *_imageCache = nil;
-    static dispatch_once_t oncePredicate;
-    dispatch_once(&oncePredicate, ^{
+    static dispatch_once_t _oncePredicate;
+    dispatch_once(&_oncePredicate, ^{
         _imageCache = [[ALImageCache alloc] init];
     });
     return _imageCache;
@@ -84,6 +84,13 @@
     }
     
     if (nil != _remotePath) {
+        if (nil != _placeholderImage) {
+            self.image = _placeholderImage;
+        } else {
+            self.image = nil;
+            self.backgroundColor = [UIColor whiteColor];
+        }
+        [[ALImageCache sharedInstance] removeObjectForKey:_remotePath];  // 销毁remotepath时释放相对应的缓存
         [_remotePath release];
         _remotePath = nil;
     }
@@ -118,6 +125,7 @@
             return;
         }
         [self asyncLoadImageWithURL:[NSURL URLWithString:[_remotePath stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]]];
+        NSLog(@"load remote image!");
     }
 }
 
@@ -136,8 +144,8 @@
 + (NSString *)localDirectory
 {    
     static NSString *_localDirectory = nil;
-    static dispatch_once_t oncePredicate;
-    dispatch_once(&oncePredicate, ^{
+    static dispatch_once_t _oncePredicate;
+    dispatch_once(&_oncePredicate, ^{
         NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
         NSString *cachesPath = ([paths count] > 0) ? [paths objectAtIndex:0] : nil;
         if (0 < [cachesPath length]) {
@@ -167,6 +175,8 @@
 
 - (void)dealloc
 {
+    [[ALImageCache sharedInstance] removeObjectForKey:_remotePath];  // 对象销毁时候同样释放掉缓存
+    
     self.remotePath = nil;
     if (nil != _activityView) {
         [_activityView stopAnimating];
@@ -223,12 +233,11 @@
         NSURLResponse *response = nil;
         NSError *error = nil;
         NSData *data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
-        
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (nil != data) {
+            if (nil == error && 0 < [data length]) {  // 测试说明有可能正常返回data长度为空
                 NSString *targetPath = [[ALImageView localDirectory] stringByAppendingPathComponent:[[url absoluteString] lastPathComponent]];
                 NSError *error = nil;
-                [data writeToFile:targetPath options:NSDataWritingFileProtectionMask error:&error];
+                [data writeToFile:targetPath options:NSDataWritingFileProtectionComplete error:&error];
                 NSLog(@"asyncLoadImage targetPath:%@ error:%@", targetPath, error);
                 if (countStamp == _requestCount) {   //该计数是为了对象被复用重新加载图片的时候，旧的block能在效果上等效被cancel
                     UIImage *img = [UIImage imageWithData:data];

@@ -28,7 +28,7 @@
 }
 
 - (IBAction)didPressStartButtonAction:(id)sender
-{
+{    
     PreviewImageViewController *pVC = [[PreviewImageViewController alloc] initWithNibName:@"PreviewImageViewController" bundle:nil];
     UINavigationController *nv = [[UINavigationController alloc] initWithRootViewController:pVC];
     if ([self respondsToSelector:@selector(presentViewController:animated:completion:)]) {

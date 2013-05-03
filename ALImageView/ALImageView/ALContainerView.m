@@ -26,13 +26,18 @@
     }
     
     if (nil != _remotePaths) {
+        int i = 0;
+        for (NSString *r in _remotePaths) {
+            ALImageView *view = [_imageViews objectAtIndex:i];
+            view.remotePath = nil;
+            i++;
+        }
         [_remotePaths release];
         _remotePaths = nil;
     }
     
     if (nil != remotePaths) {
         _remotePaths = [remotePaths retain];
-        
         dispatch_async(dispatch_get_main_queue(), ^{
             if (nil != _remotePaths) {
                 int i = 0;
@@ -147,7 +152,7 @@
 {
     ALImageView *alImageView = (ALImageView *)sender;
     NSLog(@"didPressImageViewAction:%d", alImageView.index);
-    if ([_delegate respondsToSelector:@selector(imageContentView:didSelectIndex:)]) {
+    if ([_delegate respondsToSelector:@selector(containerView:didSelectIndex:)]) {
         [_delegate containerView:self didSelectIndex:alImageView.index];
     }
     if (_selectIndexBlock) {
