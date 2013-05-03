@@ -90,7 +90,6 @@
             self.image = nil;
             self.backgroundColor = [UIColor whiteColor];
         }
-        [[ALImageCache sharedInstance] removeObjectForKey:_remotePath];  // 销毁remotepath时释放相对应的缓存
         [_remotePath release];
         _remotePath = nil;
     }
@@ -108,21 +107,23 @@
                 self.image = img;
                 self.backgroundColor = [UIColor whiteColor];
             }
-            NSLog(@"load cache image!");
+            NSLog(@"load memory cache image!");
             return;
         }
-        NSString *imgCachePath = [[ALImageView localDirectory] stringByAppendingPathComponent:[_remotePath lastPathComponent]];
-        if ([[NSFileManager defaultManager] fileExistsAtPath:imgCachePath]) {
-            UIImage *img = [UIImage imageWithContentsOfFile:imgCachePath];
-            if (nil != _placeholderImage) {
-                self.image = [self insertBgImage:_placeholderImage toImage:img];
-            } else {
-                self.image = img;
-                self.backgroundColor = [UIColor whiteColor];
+        if (_localCacheEnabled) {
+            NSString *imgCachePath = [[ALImageView localCacheDirectory] stringByAppendingPathComponent:[_remotePath lastPathComponent]];
+            if ([[NSFileManager defaultManager] fileExistsAtPath:imgCachePath]) {
+                UIImage *img = [UIImage imageWithContentsOfFile:imgCachePath];
+                if (nil != _placeholderImage) {
+                    self.image = [self insertBgImage:_placeholderImage toImage:img];
+                } else {
+                    self.image = img;
+                    self.backgroundColor = [UIColor whiteColor];
+                }
+                [[ALImageCache sharedInstance] cacheImage:img forRemotePath:_remotePath];
+                NSLog(@"load local cache image!");
+                return;
             }
-            [[ALImageCache sharedInstance] cacheImage:img forRemotePath:_remotePath];
-            NSLog(@"load local image!");
-            return;
         }
         [self asyncLoadImageWithURL:[NSURL URLWithString:[_remotePath stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]]];
         NSLog(@"load remote image!");
@@ -141,25 +142,35 @@
     }
 }
 
-+ (NSString *)localDirectory
++ (NSString *)localCacheDirectory
 {    
-    static NSString *_localDirectory = nil;
+    static NSString *_localCacheDirectory = nil;
     static dispatch_once_t _oncePredicate;
     dispatch_once(&_oncePredicate, ^{
         NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
         NSString *cachesPath = ([paths count] > 0) ? [paths objectAtIndex:0] : nil;
         if (0 < [cachesPath length]) {
-            _localDirectory = [[cachesPath stringByAppendingPathComponent:@"ALImages"] retain];
+            _localCacheDirectory = [[cachesPath stringByAppendingPathComponent:@"ALImages"] retain];
             
             BOOL isDirectory = YES;
-            if (![[NSFileManager defaultManager] fileExistsAtPath:_localDirectory isDirectory:&isDirectory] || !isDirectory) {
+            if (![[NSFileManager defaultManager] fileExistsAtPath:_localCacheDirectory isDirectory:&isDirectory] || !isDirectory) {
                 NSError *error = nil;
-                [[NSFileManager defaultManager] createDirectoryAtPath:_localDirectory withIntermediateDirectories:YES attributes:nil error:&error];
+                [[NSFileManager defaultManager] createDirectoryAtPath:_localCacheDirectory withIntermediateDirectories:YES attributes:nil error:&error];
             }
         }
-        NSLog(@"localDirectory %@", _localDirectory);
+        NSLog(@"localCacheDirectory %@", _localCacheDirectory);
     });
-    return _localDirectory;
+    return _localCacheDirectory;
+}
+
+- (id)initWithCoder:(NSCoder *)aDecoder
+{
+    self = [super initWithCoder:aDecoder];
+    if (self) {
+        
+        [self commonInit];
+    }
+    return self;
 }
 
 - (id)initWithFrame:(CGRect)frame
@@ -167,16 +178,20 @@
     self = [super initWithFrame:frame];
     if (self) {
         // Initialization code
-        _index = -UINT_MAX;
-        _queuePriority = ALImageViewQueuePriorityHigh;
+        [self commonInit];
     }
     return self;
 }
 
+- (void)commonInit
+{
+    _index = -UINT_MAX;
+    _queuePriority = ALImageViewQueuePriorityHigh;
+    _localCacheEnabled = YES;
+}
+
 - (void)dealloc
 {
-    [[ALImageCache sharedInstance] removeObjectForKey:_remotePath];  // 对象销毁时候同样释放掉缓存
-    
     self.remotePath = nil;
     if (nil != _activityView) {
         [_activityView stopAnimating];
@@ -233,12 +248,20 @@
         NSURLResponse *response = nil;
         NSError *error = nil;
         NSData *data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
-        dispatch_async(dispatch_get_main_queue(), ^{
+        
+        if (_localCacheEnabled) {
             if (nil == error && 0 < [data length]) {  //测试说明有可能正常返回data长度为空
-                NSString *targetPath = [[ALImageView localDirectory] stringByAppendingPathComponent:[[url absoluteString] lastPathComponent]];
+                NSString *targetPath = [[ALImageView localCacheDirectory] stringByAppendingPathComponent:[[url absoluteString] lastPathComponent]];
                 NSError *error = nil;
                 [data writeToFile:targetPath options:NSDataWritingFileProtectionComplete error:&error];
                 NSLog(@"asyncLoadImage targetPath:%@ error:%@", targetPath, error);
+            } else {
+                data = nil;
+            }
+        }
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (0 < [data length]) {
                 if (countStamp == _requestCount) {   //该计数是为了对象被复用重新加载图片的时候，旧的block能在效果上等效被cancel
                     UIImage *img = [UIImage imageWithData:data];
                     if (nil != _placeholderImage) {

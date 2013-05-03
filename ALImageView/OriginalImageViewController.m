@@ -42,8 +42,9 @@
 {
     [super viewWillAppear:animated];
     
-    [self.imageView loadImage:self.path placeholderImage:[UIImage imageNamed:@"img_pld"]];
+    self.imageView.localCacheEnabled = NO;
     self.imageView.delegate = self;
+    [self.imageView loadImage:self.path placeholderImage:[UIImage imageNamed:@"img_pld"]];
 }
 
 - (void)didReceiveMemoryWarning

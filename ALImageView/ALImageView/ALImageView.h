@@ -29,11 +29,12 @@
 @property (nonatomic, retain) NSString *remotePath;
 @property (nonatomic, assign) BOOL asyncLoadImageFinished;
 @property (nonatomic, assign) NSInteger queuePriority;
+@property (nonatomic, assign) BOOL localCacheEnabled;
 @property (nonatomic, assign) BOOL isCorner;
 
 @property (nonatomic, assign) id<NSObject, ALImageViewDelegate> delegate;
 
-+ (NSString *)localDirectory;
++ (NSString *)localCacheDirectory;
 
 - (void)loadImage:(NSString *)remotePath placeholderImage:(UIImage *)placeholderImage;
 
