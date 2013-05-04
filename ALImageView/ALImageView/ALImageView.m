@@ -101,7 +101,7 @@
     if (0 < [_remotePath length]) {
         UIImage *img = [[ALImageCache sharedInstance] cachedImageForRemotePath:_remotePath];
         if (nil != img) {
-            [self setImageWithAnimation:img];
+            [self setImageWithPlaceholder:img];
             NSLog(@"load memory cache image!");
             return;
         }
@@ -109,7 +109,7 @@
             NSString *imgCachePath = [[ALImageView localCacheDirectory] stringByAppendingPathComponent:[_remotePath lastPathComponent]];
             if ([[NSFileManager defaultManager] fileExistsAtPath:imgCachePath]) {
                 UIImage *img = [UIImage imageWithContentsOfFile:imgCachePath];
-                [self setImageWithAnimation:img];
+                [self setImageWithPlaceholder:img];
                 [[ALImageCache sharedInstance] cacheImage:img forRemotePath:_remotePath];
                 NSLog(@"load local cache image!");
                 return;
@@ -276,13 +276,17 @@
         NSURLResponse *response = nil;
         NSError *error = nil;
         NSData *data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
-        
         NSLog(@"asyncLoadImage connection finished:%d error:%@", [data length], error);
+        
+        UIImage *img = nil;
         if (_localCacheEnabled) {
             if (nil == error && 0 < [data length]) {  //测试说明有可能正常返回data长度为空
                 NSString *targetPath = [[ALImageView localCacheDirectory] stringByAppendingPathComponent:[[url absoluteString] lastPathComponent]];
                 NSError *error = nil;
                 [data writeToFile:targetPath options:NSDataWritingFileProtectionComplete error:&error];
+                
+                img = [UIImage imageWithData:data];
+                
                 NSLog(@"asyncLoadImage targetPath:%@ error:%@", targetPath, error);
             } else {
                 data = nil;
@@ -290,9 +294,8 @@
         }
         
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (0 < [data length]) {
+            if (nil != img) {
                 if (countStamp == _requestCount) {   //该计数是为了对象被复用重新加载图片的时候，旧的block能在效果上等效被cancel
-                    UIImage *img = [UIImage imageWithData:data];
                     [self setImageWithAnimation:img];
                     _asyncLoadImageFinished = YES;
                     [_activityView stopAnimating];
