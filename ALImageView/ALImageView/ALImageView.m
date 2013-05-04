@@ -127,6 +127,7 @@
         if (nil != _activityView) {
             [_activityView stopAnimating];
             [_activityView release];
+            _activityView = nil;
         }
     }
 }
@@ -198,6 +199,7 @@
     if (nil != _activityView) {
         [_activityView stopAnimating];
         [_activityView release];
+        _activityView = nil;
     }
     [super dealloc];
 }
@@ -275,6 +277,7 @@
         NSError *error = nil;
         NSData *data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
         
+        NSLog(@"asyncLoadImage connection finished:%d error:%@", [data length], error);
         if (_localCacheEnabled) {
             if (nil == error && 0 < [data length]) {  //测试说明有可能正常返回data长度为空
                 NSString *targetPath = [[ALImageView localCacheDirectory] stringByAppendingPathComponent:[[url absoluteString] lastPathComponent]];
