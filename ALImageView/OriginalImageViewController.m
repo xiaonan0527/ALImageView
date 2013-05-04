@@ -36,14 +36,15 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
     
+    self.imageView.localCacheEnabled = NO;
+    self.imageView.indicatorEnabled = NO;
+    self.imageView.delegate = self;
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
     
-    self.imageView.localCacheEnabled = NO;
-    self.imageView.delegate = self;
     [self.imageView loadImage:self.path placeholderImage:[UIImage imageNamed:@"img_pld"]];
 }
 

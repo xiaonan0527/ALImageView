@@ -120,6 +120,17 @@
     }
 }
 
+- (void)setIndicatorEnabled:(BOOL)indicatorEnabled
+{
+    _indicatorEnabled = indicatorEnabled;
+    if (!_indicatorEnabled) {
+        if (nil != _activityView) {
+            [_activityView stopAnimating];
+            [_activityView release];
+        }
+    }
+}
+
 - (void)setIsCorner:(BOOL)isCorner
 {
     _isCorner = isCorner;
@@ -176,8 +187,9 @@
 - (void)commonInit
 {
     _index = -UINT_MAX;
-    _queuePriority = AL_IMAGE_VIEW_QUEUE_PRIORITY_HIGH;
+    _queuePriority = ALImageQueuePriorityHigh;
     _localCacheEnabled = YES;
+    _indicatorEnabled = YES;
 }
 
 - (void)dealloc
@@ -199,25 +211,6 @@
 }
 */
 
-- (void)setImageWithAnimation:(UIImage *)img
-{
-    if (nil != _placeholderImage) {
-        self.image = [self insertBgImage:_placeholderImage toImage:img];
-    } else {
-        self.image = img;
-        self.backgroundColor = [UIColor whiteColor];
-    }
-    
-    self.alpha = 0.3f;
-    [UIView animateWithDuration:0.6f
-                          delay:0.2f
-                        options:UIViewAnimationOptionCurveEaseIn
-                     animations:^{
-                         self.alpha = 1.f;
-                     }
-                     completion:nil];
-}
-
 - (UIImage *)insertBgImage:(UIImage *)bgImage toImage:(UIImage *)image
 {
     CGFloat s = [UIScreen mainScreen].scale;
@@ -230,6 +223,30 @@
     return resultingImage;
 }
 
+- (void)setImageWithPlaceholder:(UIImage *)img
+{
+    if (nil != _placeholderImage) {
+        self.image = [self insertBgImage:_placeholderImage toImage:img];
+    } else {
+        self.image = img;
+        self.backgroundColor = [UIColor whiteColor];
+    }
+}
+
+- (void)setImageWithAnimation:(UIImage *)img
+{
+    [self setImageWithPlaceholder:img];
+    
+    self.alpha = 0.1f;
+    [UIView animateWithDuration:0.6f
+                          delay:0.16f
+                        options:UIViewAnimationOptionCurveLinear
+                     animations:^{
+                         self.alpha = 1.f;
+                     }
+                     completion:nil];
+}
+
 - (void)loadImage:(NSString *)remotePath placeholderImage:(UIImage *)placeholderImage
 {
     self.placeholderImage = placeholderImage;
@@ -238,7 +255,7 @@
 
 - (void)asyncLoadImageWithURL:(NSURL *)url
 {
-    if (nil == _activityView) {
+    if (_indicatorEnabled && nil == _activityView) {
         if (nil == _placeholderImage) {
             _activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
         } else {
@@ -286,7 +303,6 @@
                     NSLog(@"asyncLoadImage finish!");
                 }
             } else {
-                self.image = [UIImage imageNamed:@"img_pld_err"];
                 _asyncLoadImageFinished = NO;
                 [_activityView stopAnimating];
                 
@@ -295,9 +311,9 @@
         });
     };
     
-    if (AL_IMAGE_VIEW_QUEUE_PRIORITY_HIGH == _queuePriority) {
+    if (ALImageQueuePriorityHigh == _queuePriority) {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), loadImageBlock);
-    } else if (AL_IMAGE_VIEW_QUEUE_PRIORITY_NORMAL == _queuePriority) {
+    } else if (ALImageQueuePriorityNormal == _queuePriority) {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), loadImageBlock);
     } else {
         static dispatch_queue_t imageQueue = NULL;

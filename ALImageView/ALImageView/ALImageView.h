@@ -9,12 +9,13 @@
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>
 
-#define AL_IMAGE_VIEW_QUEUE_PRIORITY_LOW    1
-#define AL_IMAGE_VIEW_QUEUE_PRIORITY_NORMAL  2
-#define AL_IMAGE_VIEW_QUEUE_PRIORITY_HIGH  3
-
 #define AL_IMAGE_VIEW_LOCAL_CAHCE_DIRECTORY   @"ALImages"
 
+typedef enum {
+    ALImageQueuePriorityLow = 0,
+    ALImageQueuePriorityNormal,
+    ALImageQueuePriorityHigh,
+} ALImageQueuePriority;
 
 @class ALImageView;
 @protocol ALImageViewDelegate <NSObject>
@@ -30,7 +31,8 @@
 @property (nonatomic, assign) NSInteger index;
 @property (nonatomic, retain) NSString *remotePath;
 @property (nonatomic, assign) BOOL asyncLoadImageFinished;
-@property (nonatomic, assign) NSInteger queuePriority;
+@property (nonatomic, assign) ALImageQueuePriority queuePriority;
+@property (nonatomic, assign) BOOL indicatorEnabled;
 @property (nonatomic, assign) BOOL localCacheEnabled;
 @property (nonatomic, assign) BOOL isCorner;
 
