@@ -144,8 +144,18 @@
 
 - (void)setSelectIndexBlock:(CSelectIndexBlock)block
 {
-    [_selectIndexBlock release];
-    _selectIndexBlock = [block copy];
+    if (_selectIndexBlock == block) {
+        return;
+    }
+    
+    if (nil != _selectIndexBlock) {
+        [_selectIndexBlock release];
+        _selectIndexBlock = nil;
+    }
+    
+    if (nil != block) {
+        _selectIndexBlock = [block copy];
+    }
 }
 
 - (void)didPressImageViewAction:(id)sender

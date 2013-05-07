@@ -273,24 +273,33 @@
         
         NSURLRequest *request = [NSURLRequest requestWithURL:url];
         NSInteger countStamp = _requestCount;
+        int retryCount = -1;
+        NSData *data = nil;
+        UIImage *img = nil;
+        
         NSURLResponse *response = nil;
         NSError *error = nil;
-        NSData *data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
+        do {
+            if (AL_IMAGE_VIEW_REQUEST_RETRY_COUNT <= retryCount) {break;}
+            else if (0 <= retryCount) {usleep(200);}
+            else {/*do nothing */}
+            response = nil;
+            error = nil;
+            data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
+            retryCount++;
+        } while (nil != error || 0 == [data length]);
         NSLog(@"asyncLoadImage connection finished:%d error:%@", [data length], error);
         
-        UIImage *img = nil;
-        if (_localCacheEnabled) {
-            if (nil == error && 0 < [data length]) {  //测试说明有可能正常返回data长度为空
+        if (nil == error && 0 < [data length]) {  //测试说明有可能正常返回data长度为空
+            if (_localCacheEnabled) {
                 NSString *targetPath = [[ALImageView localCacheDirectory] stringByAppendingPathComponent:[[url absoluteString] lastPathComponent]];
                 NSError *error = nil;
                 [data writeToFile:targetPath options:NSDataWritingFileProtectionComplete error:&error];
-                
-                img = [UIImage imageWithData:data];
-                
                 NSLog(@"asyncLoadImage targetPath:%@ error:%@", targetPath, error);
-            } else {
-                data = nil;
             }
+            img = [UIImage imageWithData:data];
+        } else {
+            data = nil;
         }
         
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -305,13 +314,11 @@
                     }
                     
                     [[ALImageCache sharedInstance] cacheImage:img forRemotePath:[url absoluteString]];
-                    
                     NSLog(@"asyncLoadImage finish!");
                 }
             } else {
                 _asyncLoadImageFinished = NO;
                 [_activityView stopAnimating];
-                
                 NSLog(@"asyncLoadImage finish without setImage!");
             }
         });

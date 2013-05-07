@@ -77,7 +77,7 @@
 {
     [super viewWillAppear:animated];
     
-    NSLog(@"%s previewcontroller %d self.navigationController : %d", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
+    NSLog(@"%s self retain count %d self.navigationController retain count %d", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
 }
 
 - (void)didReceiveMemoryWarning
@@ -94,7 +94,7 @@
         [self dismissModalViewControllerAnimated:YES];
     }
     
-    NSLog(@"%s previewcontroller %d self.navigationController : %d", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
+    NSLog(@"%s self retain count %d self.navigationController retain count %d imagepaths  retain count %d", __FUNCTION__, [self retainCount], [self.navigationController retainCount], [_imagePaths retainCount]);
 }
 
 - (void)getImagePathsFromServer
@@ -152,16 +152,16 @@
     CGFloat y = 0.f;
     CGFloat width = bounds.size.width;
     CGFloat height = bounds.size.height;
-    NSLog(@"%s previewcontroller %d self.navigationController : %d", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
+    NSLog(@"%s previewcontrollerself  retain count %d self.navigationController retain count %d", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
     
-    // Block这里的回调会对self形成强引用（retain），而self间接对Block同样是强引用的，造成对象间的互相强引用，内存泄露
-//    NSMutableArray *blockPaths = _imagePaths;
+    // It will lead to retain cycles!!!
 //    CSelectIndexBlock block = ^(ALContainerView *icView, NSInteger index) {
 //        NSLog(@"block didSelectIndex:%d", icView.fromIndex+index);
-//        OriginalImageViewController *originalImageVC = [[[OriginalImageViewController alloc] init] autorelease];
-//        NSDictionary *dic = [blockPaths objectAtIndex:icView.fromIndex+index];
-//        originalImageVC.remotePath = [dic objectForKey:@"RemoteOriginal"];
-//        [self.navigationController pushViewController:originalImageVC animated:YES];
+//        OriginalImageViewController *originalImageVC = [[OriginalImageViewController alloc] init];
+//        NSDictionary *dic = [(__unsafe_unretained id)_imagePaths objectAtIndex:icView.fromIndex+index];
+//        originalImageVC.path = [dic objectForKey:@"RemoteOriginal"];
+//        [(__unsafe_unretained id)self.navigationController pushViewController:originalImageVC animated:YES];
+//        [originalImageVC release];
 //    };
     
     if (nil == _containerViews) {
