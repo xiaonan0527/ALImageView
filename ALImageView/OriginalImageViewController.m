@@ -36,6 +36,7 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
     
+    self.imageView.queuePriority = ALImageQueuePriorityHigh;
     self.imageView.localCacheEnabled = NO;
     self.imageView.indicatorEnabled = NO;
     self.imageView.delegate = self;
