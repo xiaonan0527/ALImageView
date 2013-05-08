@@ -188,7 +188,7 @@
 - (void)commonInit
 {
     _index = -UINT_MAX;
-    _queuePriority = ALImageQueuePriorityHigh;
+    _queuePriority = ALImageQueuePriorityNormal;
     _localCacheEnabled = YES;
     _indicatorEnabled = YES;
 }
@@ -287,6 +287,7 @@
             error = nil;
             data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
             retryCount++;
+            NSLog(@"asyncLoadImage connection request retry count:%d", retryCount);
         } while (nil != error || 0 == [data length]);
         NSLog(@"asyncLoadImage connection finished:%d error:%@", [data length], error);
         
