@@ -8,6 +8,8 @@
 
 #import "ALImageView.h"
 
+#define REQUEST_RETRY_COUNT   2
+
 @interface ALImageCache : NSCache
 
 + (ALImageCache *)sharedInstance;
@@ -280,7 +282,7 @@
         NSURLResponse *response = nil;
         NSError *error = nil;
         do {
-            if (AL_IMAGE_VIEW_REQUEST_RETRY_COUNT <= retryCount) {break;}
+            if (REQUEST_RETRY_COUNT <= retryCount) {break;}
             else if (0 <= retryCount) {usleep(200);}
             else {/*do nothing */}
             response = nil;

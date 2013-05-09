@@ -9,7 +9,6 @@
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>
 
-#define AL_IMAGE_VIEW_REQUEST_RETRY_COUNT   2
 #define AL_IMAGE_VIEW_LOCAL_CAHCE_DIRECTORY   @"ALImages"
 
 typedef enum {
