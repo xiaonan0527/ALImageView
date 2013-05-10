@@ -19,6 +19,18 @@
 
 @implementation ALContainerView
 
+- (void)setIsCorner:(BOOL)isCorner
+{
+    _isCorner = isCorner;
+    if (_isCorner) {
+        self.layer.cornerRadius = 10.0f;
+        self.clipsToBounds = YES;
+    } else {
+        self.layer.cornerRadius = 0.0f;
+        self.clipsToBounds = NO;
+    }
+}
+
 - (void)setImageURLs:(NSArray *)imageURLs
 {
     if (imageURLs == _imageURLs) {
@@ -38,18 +50,16 @@
     
     if (nil != imageURLs) {
         _imageURLs = [imageURLs retain];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (nil != _imageURLs) {
-                int i = 0;
-                for (NSString *u in _imageURLs) {
-                    if (0 < [u length]) {
-                        ALImageView *view = [_imageViews objectAtIndex:i];
-                        view.imageURL = u;
-                    }
-                    i++;
+        if (nil != _imageURLs) {
+            int i = 0;
+            for (NSString *u in _imageURLs) {
+                if (0 < [u length]) {
+                    ALImageView *view = [_imageViews objectAtIndex:i];
+                    view.imageURL = u;
                 }
+                i++;
             }
-        });
+        }
     }
 }
 
@@ -58,9 +68,18 @@
     self = [super initWithFrame:frame];
     if (self) {
         // Initialization code
-        _fromIndex = -UINT_MAX;
+        [self commonInit];
     }
     return self;
+}
+
+- (void)commonInit
+{
+    _edgeInsets = ALContainerEdgeInsetsMake(20.f, 20.f, 40.f, 20.f);
+    _composition = ALContainerCompositionMake(2, 3, 20.f, 16.f);
+    [self setIsCorner:YES];
+    _imageTag = -UINT_MAX;
+    _imageCount = 0;
 }
 
 - (void)dealloc
@@ -86,20 +105,21 @@
  }
  */
 
-- (void)setImageCount:(NSUInteger)count fromIndex:(NSInteger)index
+- (void)setImageCount:(NSUInteger)count imageTag:(NSInteger)tag
 {
+    self.imageTag = tag;
     self.imageCount = count;
-    self.fromIndex = index;
     
     if (_imageCount > 0) {
-        int columns = AL_CONTAINER_VIEW_COLUMN_COUNT;
-        int rows = AL_CONTAINER_VIEW_ROW_COUNT;
-        CGFloat xLR = AL_CONTAINER_VIEW_MARGIN_LR;
-        CGFloat yU = AL_CONTAINER_VIEW_MARGIN_UP;
-        CGFloat yD = AL_CONTAINER_VIEW_MARGIN_DOWN;
-        CGFloat xGap = AL_CONTAINER_VIEW_GAP_X;
-        CGFloat yGap = AL_CONTAINER_VIEW_GAP_Y;
-        CGFloat width = (self.bounds.size.width-2*xLR-(columns-1)*xGap)/columns;
+        CGFloat xL = _edgeInsets.left;
+        CGFloat xR = _edgeInsets.right;
+        CGFloat yU = _edgeInsets.top;
+        CGFloat yD = _edgeInsets.bottom;
+        NSInteger columns = _composition.column;
+        NSInteger rows = _composition.row;
+        CGFloat xGap = _composition.gap.x;
+        CGFloat yGap = _composition.gap.y;
+        CGFloat width = (self.bounds.size.width-xL-xR-(columns-1)*xGap)/columns;
         CGFloat height = (self.bounds.size.height-yU-yD-(rows-1)*yGap)/rows;
         NSLog(@"width:%f height:%f", width, height);
         if (nil == _imageViews) {
@@ -119,7 +139,7 @@
                 if (tempCount > i+columns*j) {
                     alImageView = [[_imageViews objectAtIndex:i+columns*j] retain];
                 } else {
-                    alImageView = [[ALImageView alloc] initWithFrame:CGRectMake(xLR+(xGap+width)*i, yU+(yGap+height)*j, width, height)];
+                    alImageView = [[ALImageView alloc] initWithFrame:CGRectMake(xL+(xGap+width)*i, yU+(yGap+height)*j, width, height)];
                     alImageView.placeholderImage = [UIImage imageNamed:@"img_pld"];
                     alImageView.contentEdgeInsets = UIEdgeInsetsMake(3.f, 4.f, 3.f, 4.f);
                     alImageView.index = i+j*columns;
@@ -130,17 +150,15 @@
                 [alImageView release];
             }
         }
-        dispatch_async(dispatch_get_main_queue(), ^{
-            for (int i=0; i<[_imageViews count]; i++) {
-                ALImageView *alImageView = [_imageViews objectAtIndex:i];
-                if (_imageCount > i) {
-                    alImageView.hidden = NO;
-                } else {
-                    alImageView.hidden = YES;
-                }
+        
+        for (int i=0; i<[_imageViews count]; i++) {
+            ALImageView *alImageView = [_imageViews objectAtIndex:i];
+            if (_imageCount > i) {
+                alImageView.hidden = NO;
+            } else {
+                alImageView.hidden = YES;
             }
-        });
-    }
+        }    }
 }
 
 - (void)setSelectIndexBlock:(CSelectIndexBlock)block

@@ -91,7 +91,6 @@
             self.image = _placeholderImage;
         } else {
             self.image = nil;
-            self.backgroundColor = [UIColor whiteColor];
         }
         [_imageURL release];
         _imageURL = nil;
@@ -119,7 +118,7 @@
             }
         }
         [self asyncLoadImageWithURL:[NSURL URLWithString:[_imageURL stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]]];
-        NSLog(@"load remote image!");
+        NSLog(@"load async image!");
     }
 }
 
@@ -163,7 +162,7 @@
                 [[NSFileManager defaultManager] createDirectoryAtPath:_localCacheDirectory withIntermediateDirectories:YES attributes:nil error:&error];
             }
         }
-        NSLog(@"localCacheDirectory %@", _localCacheDirectory);
+        NSLog(@"local cache directory %@", _localCacheDirectory);
     });
     return _localCacheDirectory;
 }
@@ -190,7 +189,7 @@
 
 - (void)commonInit
 {
-//    self.backgroundColor = [UIColor whiteColor];
+    self.backgroundColor = [UIColor whiteColor];
     
     _index = -UINT_MAX;
     _queuePriority = ALImageQueuePriorityNormal;
@@ -299,16 +298,16 @@
             error = nil;
             data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
             retryCount++;
-            NSLog(@"asyncLoadImage connection request retry count:%d", retryCount);
-        } while (nil != error || 0 == [data length]);
-        NSLog(@"asyncLoadImage connection finished:%d error:%@", [data length], error);
+            NSLog(@"async load image connection request retry count:%d expected length:%lld", retryCount, response.expectedContentLength);
+        } while (nil != error || response.expectedContentLength > [data length]);
+        NSLog(@"async load image connection finished:%d error:%@", [data length], error);
         
-        if (nil == error && 0 < [data length]) {  // Tested may return the length of the data is empty
+        if (nil == error && response.expectedContentLength == [data length]) {  // Tested may return the length of the data is empty or less
             if (_localCacheEnabled) {
                 NSString *targetPath = [[ALImageView localCacheDirectory] stringByAppendingPathComponent:[[url absoluteString] lastPathComponent]];
                 NSError *error = nil;
                 [data writeToFile:targetPath options:NSDataWritingFileProtectionComplete error:&error];
-                NSLog(@"asyncLoadImage targetPath:%@ error:%@", targetPath, error);
+                NSLog(@"async load iåmage targetPath:%@ error:%@", targetPath, error);
             }
             img = [UIImage imageWithData:data];
         } else {
@@ -328,12 +327,12 @@
                     }
                     
                     [[ALImageCache sharedInstance] cacheImage:img forImageURL:[url absoluteString]];
-                    NSLog(@"asyncLoadImage finish!");
+                    NSLog(@"async load image finish!");
                 }
             } else {
                 _asyncLoadImageFinished = NO;
                 [_activityView stopAnimating];
-                NSLog(@"asyncLoadImage finish without setImage!");
+                NSLog(@"async load image finish without set image!");
             }
         });
     };

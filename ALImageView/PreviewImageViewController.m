@@ -10,7 +10,7 @@
 #import "OriginalImageViewController.h"
 
 #define PageCount(t_num, p_num)  (t_num%p_num ? (t_num/p_num+1) : t_num/p_num)
-#define PreviewImageViewControllerContainerImageCount      (AL_CONTAINER_VIEW_COLUMN_COUNT*AL_CONTAINER_VIEW_ROW_COUNT)
+#define PreviewImageViewControllerContainerImageCount      (2*3)
 
 @interface PreviewImageViewController ()
 {
@@ -149,10 +149,10 @@
     }
     
     CGRect bounds = self.view.bounds;
-    CGFloat x = 0.f;
-    CGFloat y = 0.f;
-    CGFloat width = bounds.size.width;
-    CGFloat height = bounds.size.height;
+    CGFloat x = 10.f;
+    CGFloat y = 10.f;
+    CGFloat width = bounds.size.width-20.f;
+    CGFloat height = bounds.size.height-40.f;
     NSLog(@"%s previewcontrollerself  retain count %d; self.navigationController retain count %d;", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
     
     // It will lead to retain cycles!!!
@@ -175,7 +175,8 @@
         if (tempCount > i) {
             imageContainerView = [[_containerViews objectAtIndex:i] retain];
         } else {
-            imageContainerView = [[ALContainerView alloc] initWithFrame:CGRectMake(i*width+x, y, width, height)];
+            imageContainerView = [[ALContainerView alloc] initWithFrame:CGRectMake(i*bounds.size.width+x, y, width, height)];
+            imageContainerView.backgroundColor = [UIColor colorWithWhite:0.f alpha:0.3f];
 //            [imageContainerView setSelectIndexBlock:block];
             imageContainerView.delegate = self;
             [_containerViews addObject:imageContainerView];
@@ -209,9 +210,9 @@
         if (1 == imageContainerView.tag) {
             NSInteger index = i*PreviewImageViewControllerContainerImageCount;
             if (index+PreviewImageViewControllerContainerImageCount >= [_imageInfos count]) {
-                [imageContainerView setImageCount:[_imageInfos count]-index fromIndex:index];
+                [imageContainerView setImageCount:[_imageInfos count]-index imageTag:index];
             } else {
-                [imageContainerView setImageCount:PreviewImageViewControllerContainerImageCount fromIndex:index];
+                [imageContainerView setImageCount:PreviewImageViewControllerContainerImageCount imageTag:index];
             }
             i++;
         }
@@ -245,7 +246,7 @@
 - (void)reloadImages:(NSInteger)index
 {
     ALContainerView *containerView = [_containerViews objectAtIndex:index/PreviewImageViewControllerContainerImageCount];
-    if (index == containerView.fromIndex && nil != containerView.imageURLs) {
+    if (index == containerView.imageTag && nil != containerView.imageURLs) {
         return;
     }
     [self reloadImages:containerView index:index];
@@ -257,8 +258,8 @@
         return;
     }
     NSMutableArray *imageURLs = [NSMutableArray array];
-    NSInteger mixIndex = containerView.fromIndex;
-    NSInteger maxIndex = containerView.fromIndex+containerView.imageCount;
+    NSInteger mixIndex = containerView.imageTag;
+    NSInteger maxIndex = containerView.imageTag+containerView.imageCount;
     NSAssert(0 <= mixIndex, @"mixIndex error!");
     NSAssert([_imageInfos count] >= maxIndex, @"maxIndex error!");
     NSLog(@"mixIndex:%d maxIndex:%d", mixIndex, maxIndex);
@@ -304,9 +305,9 @@
 
 - (void)containerView:(ALContainerView *)cView didSelectIndex:(NSInteger)index
 {
-    NSLog(@"didSelectIndex:%d", cView.fromIndex+index);
+    NSLog(@"didSelectIndex:%d", cView.imageTag+index);
     OriginalImageViewController *originalImageVC = [[OriginalImageViewController alloc] init];
-    NSDictionary *dic = [_imageInfos objectAtIndex:cView.fromIndex+index];
+    NSDictionary *dic = [_imageInfos objectAtIndex:cView.imageTag+index];
     originalImageVC.url = [dic objectForKey:@"RemoteOriginal"];
     [self.navigationController pushViewController:originalImageVC animated:YES];
     [originalImageVC release];

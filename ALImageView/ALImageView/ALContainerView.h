@@ -8,14 +8,36 @@
 
 #import <UIKit/UIKit.h>
 
-#define AL_CONTAINER_VIEW_COLUMN_COUNT     2
-#define AL_CONTAINER_VIEW_ROW_COUNT     3
+typedef UIEdgeInsets ALContainerEdgeInsets;
 
-#define AL_CONTAINER_VIEW_MARGIN_LR    20.f     // left margin and right margin
-#define AL_CONTAINER_VIEW_MARGIN_UP     20.f    // up margin
-#define AL_CONTAINER_VIEW_MARGIN_DOWN   40.f    // down margin
-#define AL_CONTAINER_VIEW_GAP_X    20.f         // gap in the horizontal direction
-#define AL_CONTAINER_VIEW_GAP_Y    16.f         // gap in the vertical direction
+typedef struct
+{
+    CGFloat x;
+    CGFloat y;
+} ALContainerGap;
+
+typedef struct
+{
+    NSInteger column;
+    NSInteger row;
+    ALContainerGap gap;
+} ALContainerComposition;
+
+UIKIT_STATIC_INLINE ALContainerEdgeInsets ALContainerEdgeInsetsMake(CGFloat top, CGFloat left, CGFloat bottom, CGFloat right) {
+    ALContainerEdgeInsets insets = {top, left, bottom, right};
+    return insets;
+}
+
+UIKIT_STATIC_INLINE ALContainerGap ALContainerGapMake(CGFloat x, CGFloat y) {
+    ALContainerGap gap = {x, y};
+    return gap;
+}
+
+UIKIT_STATIC_INLINE ALContainerComposition ALContainerCompositionMake(CGFloat column, CGFloat row, CGFloat x, CGFloat y) {
+    ALContainerGap gap = ALContainerGapMake(x, y);
+    ALContainerComposition composition = {column, row, gap};
+    return composition;
+}
 
 @class ALContainerView;
 typedef void (^CSelectIndexBlock)(ALContainerView *cView, NSInteger index);
@@ -29,13 +51,16 @@ typedef void (^CSelectIndexBlock)(ALContainerView *cView, NSInteger index);
 
 @interface ALContainerView : UIView
 
-@property (nonatomic, readwrite) NSInteger fromIndex;
-@property (nonatomic, readwrite) NSUInteger imageCount;
+@property (nonatomic, assign) ALContainerEdgeInsets edgeInsets;
+@property (nonatomic, assign) ALContainerComposition composition;
+@property (nonatomic, assign) BOOL isCorner;
+@property (nonatomic, assign) NSInteger imageTag;
+@property (nonatomic, assign) NSUInteger imageCount;
 @property (nonatomic, retain) NSArray *imageURLs;
 
 @property (nonatomic, assign) id<NSObject, ALContainerViewDelegate> delegate;
 
-- (void)setImageCount:(NSUInteger)count fromIndex:(NSInteger)index;
+- (void)setImageCount:(NSUInteger)count imageTag:(NSInteger)tag;
 
 - (void)setSelectIndexBlock:(CSelectIndexBlock)block;
 
