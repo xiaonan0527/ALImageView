@@ -14,9 +14,9 @@
 
 + (ALImageCache *)sharedInstance;
 
-- (UIImage *)cachedImageForRemotePath:(NSString *)path;
+- (UIImage *)cachedImageForImageURL:(NSString *)url;
 
-- (void)cacheImage:(UIImage *)image forRemotePath:(NSString *)path;
+- (void)cacheImage:(UIImage *)image forImageURL:(NSString *)url;
 
 @end
 
@@ -31,15 +31,15 @@
     return _imageCache;
 }
 
-- (UIImage *)cachedImageForRemotePath:(NSString *)path
+- (UIImage *)cachedImageForImageURL:(NSString *)url
 {
-	return [self objectForKey:path];
+	return [self objectForKey:url];
 }
 
-- (void)cacheImage:(UIImage *)image forRemotePath:(NSString *)path
+- (void)cacheImage:(UIImage *)image forImageURL:(NSString *)url
 {
-    if (image && path) {
-        [self setObject:image forKey:path];
+    if (image && url) {
+        [self setObject:image forKey:url];
     }
 }
 
@@ -52,7 +52,8 @@
     UIActivityIndicatorView *_activityView;
     id _target;
     SEL _action;
-    NSInteger _requestCount;   //添加该计数是为了对象被复用重新加载图片的时候，旧的block能在效果上等效被cancel
+    NSInteger _requestCount;   // Add the count to reload a picture when the object is complex,
+                               // the old block, in effect, equivalent cancel
 }
 
 - (UIImage *)insertBgImage:(UIImage *)bgImage toImage:(UIImage *)image;
@@ -79,45 +80,45 @@
     self.image = _placeholderImage;
 }
 
-- (void)setRemotePath:(NSString *)remotePath
+- (void)setImageURL:(NSString *)imageURL
 {
-    if (_remotePath == remotePath) {
+    if (_imageURL == imageURL) {
         return;
     }
     
-    if (nil != _remotePath) {
+    if (nil != _imageURL) {
         if (nil != _placeholderImage) {
             self.image = _placeholderImage;
         } else {
             self.image = nil;
             self.backgroundColor = [UIColor whiteColor];
         }
-        [_remotePath release];
-        _remotePath = nil;
+        [_imageURL release];
+        _imageURL = nil;
     }
     
-    if (nil != remotePath) {
-        _remotePath = [remotePath retain];
+    if (nil != imageURL) {
+        _imageURL = [imageURL retain];
     }
     
-    if (0 < [_remotePath length]) {
-        UIImage *img = [[ALImageCache sharedInstance] cachedImageForRemotePath:_remotePath];
+    if (0 < [_imageURL length]) {
+        UIImage *img = [[ALImageCache sharedInstance] cachedImageForImageURL:_imageURL];
         if (nil != img) {
             [self setImageWithPlaceholder:img];
             NSLog(@"load memory cache image!");
             return;
         }
         if (_localCacheEnabled) {
-            NSString *imgCachePath = [[ALImageView localCacheDirectory] stringByAppendingPathComponent:[_remotePath lastPathComponent]];
+            NSString *imgCachePath = [[ALImageView localCacheDirectory] stringByAppendingPathComponent:[_imageURL lastPathComponent]];
             if ([[NSFileManager defaultManager] fileExistsAtPath:imgCachePath]) {
                 UIImage *img = [UIImage imageWithContentsOfFile:imgCachePath];
                 [self setImageWithPlaceholder:img];
-                [[ALImageCache sharedInstance] cacheImage:img forRemotePath:_remotePath];
+                [[ALImageCache sharedInstance] cacheImage:img forImageURL:_imageURL];
                 NSLog(@"load local cache image!");
                 return;
             }
         }
-        [self asyncLoadImageWithURL:[NSURL URLWithString:[_remotePath stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]]];
+        [self asyncLoadImageWithURL:[NSURL URLWithString:[_imageURL stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]]];
         NSLog(@"load remote image!");
     }
 }
@@ -189,6 +190,8 @@
 
 - (void)commonInit
 {
+//    self.backgroundColor = [UIColor whiteColor];
+    
     _index = -UINT_MAX;
     _queuePriority = ALImageQueuePriorityNormal;
     _localCacheEnabled = YES;
@@ -197,7 +200,7 @@
 
 - (void)dealloc
 {
-    self.remotePath = nil;
+    self.imageURL = nil;
     if (nil != _activityView) {
         [_activityView stopAnimating];
         [_activityView release];
@@ -217,23 +220,30 @@
 
 - (UIImage *)insertBgImage:(UIImage *)bgImage toImage:(UIImage *)image
 {
-    CGFloat s = [UIScreen mainScreen].scale;
-    CGSize size = CGSizeMake(s*self.bounds.size.width, s*self.bounds.size.height);
-    UIGraphicsBeginImageContext(size);
-    [bgImage drawInRect:CGRectMake(0.f, 0.f, s*self.bounds.size.width, s*self.bounds.size.height)];
-    [image drawInRect:CGRectMake(s*4.f, s*3.f, s*(self.bounds.size.width-8.f), s*(self.bounds.size.height-8.f))];
-    UIImage *resultingImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    return resultingImage;
+    if (_contentEdgeInsets.top || _contentEdgeInsets.left || _contentEdgeInsets.bottom || _contentEdgeInsets.right) {
+        CGFloat s = [UIScreen mainScreen].scale;
+        CGSize size = CGSizeMake(s*self.bounds.size.width, s*self.bounds.size.height);
+        UIGraphicsBeginImageContext(size);
+        [bgImage drawInRect:CGRectMake(0.f, 0.f, s*self.bounds.size.width, s*self.bounds.size.height)];
+        [image drawInRect:CGRectMake(s*_contentEdgeInsets.left, s*_contentEdgeInsets.top, s*(self.bounds.size.width-_contentEdgeInsets.left-_contentEdgeInsets.right), s*(self.bounds.size.height-_contentEdgeInsets.top-_contentEdgeInsets.bottom))];
+        UIImage *resultingImage = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+        return resultingImage;
+    } else {
+        return image;
+    }
 }
 
 - (void)setImageWithPlaceholder:(UIImage *)img
 {
+    if (nil == img) {
+        return;
+    }
+    
     if (nil != _placeholderImage) {
         self.image = [self insertBgImage:_placeholderImage toImage:img];
     } else {
         self.image = img;
-        self.backgroundColor = [UIColor whiteColor];
     }
 }
 
@@ -242,7 +252,7 @@
     [self setImageWithPlaceholder:img];
     
     self.alpha = 0.1f;
-    [UIView animateWithDuration:0.6f
+    [UIView animateWithDuration:0.32f
                           delay:0.16f
                         options:UIViewAnimationOptionCurveLinear
                      animations:^{
@@ -251,10 +261,10 @@
                      completion:nil];
 }
 
-- (void)loadImage:(NSString *)remotePath placeholderImage:(UIImage *)placeholderImage
+- (void)loadImage:(NSString *)imageURL placeholderImage:(UIImage *)placeholderImage
 {
     self.placeholderImage = placeholderImage;
-    self.remotePath = remotePath;
+    self.imageURL = imageURL;
 }
 
 - (void)asyncLoadImageWithURL:(NSURL *)url
@@ -293,7 +303,7 @@
         } while (nil != error || 0 == [data length]);
         NSLog(@"asyncLoadImage connection finished:%d error:%@", [data length], error);
         
-        if (nil == error && 0 < [data length]) {  //测试说明有可能正常返回data长度为空
+        if (nil == error && 0 < [data length]) {  // Tested may return the length of the data is empty
             if (_localCacheEnabled) {
                 NSString *targetPath = [[ALImageView localCacheDirectory] stringByAppendingPathComponent:[[url absoluteString] lastPathComponent]];
                 NSError *error = nil;
@@ -307,7 +317,8 @@
         
         dispatch_async(dispatch_get_main_queue(), ^{
             if (nil != img) {
-                if (countStamp == _requestCount) {   //该计数是为了对象被复用重新加载图片的时候，旧的block能在效果上等效被cancel
+                if (countStamp == _requestCount) {   // Add the count to reload a picture when the object is complex,
+                                                     // the old block, in effect, equivalent cancel
                     [self setImageWithAnimation:img];
                     _asyncLoadImageFinished = YES;
                     [_activityView stopAnimating];
@@ -316,7 +327,7 @@
                         [_delegate imageView:self didAsynchronousLoadImage:img];
                     }
                     
-                    [[ALImageCache sharedInstance] cacheImage:img forRemotePath:[url absoluteString]];
+                    [[ALImageCache sharedInstance] cacheImage:img forImageURL:[url absoluteString]];
                     NSLog(@"asyncLoadImage finish!");
                 }
             } else {

@@ -26,8 +26,8 @@
 - (void)dealloc
 {
     self.imageView = nil;
-    self.thumbnailPath = nil;
-    self.path = nil;
+    self.thumbnailURL = nil;
+    self.url = nil;
     [super dealloc];
 }
 
@@ -35,6 +35,8 @@
 {
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
+    
+    self.title = NSLocalizedString(@"Original", @"title");
     
     self.imageView.queuePriority = ALImageQueuePriorityHigh;
     self.imageView.localCacheEnabled = NO;
@@ -46,7 +48,7 @@
 {
     [super viewWillAppear:animated];
     
-    [self.imageView loadImage:self.path placeholderImage:[UIImage imageNamed:@"img_pld"]];
+    [self.imageView loadImage:self.url placeholderImage:[UIImage imageNamed:@"img_pld"]];
 }
 
 - (void)didReceiveMemoryWarning

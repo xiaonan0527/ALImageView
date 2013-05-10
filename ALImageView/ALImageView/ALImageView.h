@@ -28,8 +28,9 @@ typedef enum {
 @interface ALImageView : UIImageView
 
 @property (nonatomic, retain) UIImage *placeholderImage;
+@property (nonatomic, assign) UIEdgeInsets contentEdgeInsets;
 @property (nonatomic, assign) NSInteger index;
-@property (nonatomic, retain) NSString *remotePath;
+@property (nonatomic, retain) NSString *imageURL;
 @property (nonatomic, assign) BOOL asyncLoadImageFinished;
 @property (nonatomic, assign) ALImageQueuePriority queuePriority;
 @property (nonatomic, assign) BOOL indicatorEnabled;
@@ -40,7 +41,7 @@ typedef enum {
 
 + (NSString *)localCacheDirectory;
 
-- (void)loadImage:(NSString *)remotePath placeholderImage:(UIImage *)placeholderImage;
+- (void)loadImage:(NSString *)imageURL placeholderImage:(UIImage *)placeholderImage;
 
 - (void)addTarget:(id)target action:(SEL)action;
 

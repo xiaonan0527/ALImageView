@@ -19,32 +19,32 @@
 
 @implementation ALContainerView
 
-- (void)setRemotePaths:(NSArray *)remotePaths
+- (void)setImageURLs:(NSArray *)imageURLs
 {
-    if (remotePaths == _remotePaths) {
+    if (imageURLs == _imageURLs) {
         return;
     }
     
-    if (nil != _remotePaths) {
+    if (nil != _imageURLs) {
         int i = 0;
-        for (NSString *r in _remotePaths) {
+        for (NSString *u in _imageURLs) {
             ALImageView *view = [_imageViews objectAtIndex:i];
-            view.remotePath = nil;
+            view.imageURL = nil;
             i++;
         }
-        [_remotePaths release];
-        _remotePaths = nil;
+        [_imageURLs release];
+        _imageURLs = nil;
     }
     
-    if (nil != remotePaths) {
-        _remotePaths = [remotePaths retain];
+    if (nil != imageURLs) {
+        _imageURLs = [imageURLs retain];
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (nil != _remotePaths) {
+            if (nil != _imageURLs) {
                 int i = 0;
-                for (NSString *r in _remotePaths) {
-                    if (0 < [r length]) {
+                for (NSString *u in _imageURLs) {
+                    if (0 < [u length]) {
                         ALImageView *view = [_imageViews objectAtIndex:i];
-                        view.remotePath = r;
+                        view.imageURL = u;
                     }
                     i++;
                 }
@@ -65,7 +65,7 @@
 
 - (void)dealloc
 {
-    self.remotePaths = nil;
+    self.imageURLs = nil;
     if (nil != _imageViews) {
         [_imageViews release];
         _imageViews = nil;
@@ -107,12 +107,12 @@
         }
         int tempCount = [_imageViews count];
         for (int j=0; j<rows; j++) {
-            if (_imageCount <= columns*j) {  //排版到最后一个就跳出循环
+            if (_imageCount <= columns*j) {  // out of the loop when typesetting to the last
                 break;
             }
             for (int i=0; i<columns; i++) {
                 NSLog(@"_imageCount:%d i+columns*j:%d", _imageCount, i+columns*j);
-                if (_imageCount <= i+columns*j) {  //排版到最后一个就跳出循环
+                if (_imageCount <= i+columns*j) {  // out of the loop when typesetting to the last
                     break;
                 }
                 ALImageView *alImageView = nil;
@@ -121,6 +121,7 @@
                 } else {
                     alImageView = [[ALImageView alloc] initWithFrame:CGRectMake(xLR+(xGap+width)*i, yU+(yGap+height)*j, width, height)];
                     alImageView.placeholderImage = [UIImage imageNamed:@"img_pld"];
+                    alImageView.contentEdgeInsets = UIEdgeInsetsMake(3.f, 4.f, 3.f, 4.f);
                     alImageView.index = i+j*columns;
                     [alImageView addTarget:self action:@selector(didPressImageViewAction:)];
                     [_imageViews addObject:alImageView];

@@ -12,7 +12,7 @@
 @interface OriginalImageViewController : UIViewController<ALImageViewDelegate>
 
 @property (nonatomic, retain) IBOutlet ALImageView *imageView;
-@property (nonatomic, retain) NSString *thumbnailPath;
-@property (nonatomic, retain) NSString *path;
+@property (nonatomic, retain) NSString *thumbnailURL;
+@property (nonatomic, retain) NSString *url;
 
 @end
