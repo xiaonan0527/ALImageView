@@ -10,7 +10,7 @@
 #import "OriginalImageViewController.h"
 
 #define PageCount(t_num, p_num)  (t_num%p_num ? (t_num/p_num+1) : t_num/p_num)
-#define PreviewImageViewControllerContainerImageCount      (2*3)
+#define PreviewImageViewControllerContainerImageCount     6
 
 @interface PreviewImageViewController ()
 {
@@ -177,8 +177,9 @@
         } else {
             imageContainerView = [[ALContainerView alloc] initWithFrame:CGRectMake(i*bounds.size.width+x, y, width, height)];
             imageContainerView.backgroundColor = [UIColor colorWithWhite:0.f alpha:0.3f];
-//            [imageContainerView setSelectIndexBlock:block];
+            imageContainerView.edgeInsets = ALContainerEdgeInsetsMake(14.f, 22.f, 14.f, 22.f);
             imageContainerView.delegate = self;
+//            [imageContainerView setSelectIndexBlock:block];
             [_containerViews addObject:imageContainerView];
             [_scrollView addSubview:imageContainerView];
         }
@@ -210,9 +211,9 @@
         if (1 == imageContainerView.tag) {
             NSInteger index = i*PreviewImageViewControllerContainerImageCount;
             if (index+PreviewImageViewControllerContainerImageCount >= [_imageInfos count]) {
-                [imageContainerView setImageCount:[_imageInfos count]-index imageTag:index];
+                [imageContainerView setImageCount:[_imageInfos count]-index groupTag:index];
             } else {
-                [imageContainerView setImageCount:PreviewImageViewControllerContainerImageCount imageTag:index];
+                [imageContainerView setImageCount:PreviewImageViewControllerContainerImageCount groupTag:index];
             }
             i++;
         }
@@ -246,7 +247,7 @@
 - (void)reloadImages:(NSInteger)index
 {
     ALContainerView *containerView = [_containerViews objectAtIndex:index/PreviewImageViewControllerContainerImageCount];
-    if (index == containerView.imageTag && nil != containerView.imageURLs) {
+    if (index == containerView.groupTag && nil != containerView.imageURLs) {
         return;
     }
     [self reloadImages:containerView index:index];
@@ -258,8 +259,8 @@
         return;
     }
     NSMutableArray *imageURLs = [NSMutableArray array];
-    NSInteger mixIndex = containerView.imageTag;
-    NSInteger maxIndex = containerView.imageTag+containerView.imageCount;
+    NSInteger mixIndex = containerView.groupTag;
+    NSInteger maxIndex = containerView.groupTag+containerView.imageCount;
     NSAssert(0 <= mixIndex, @"mixIndex error!");
     NSAssert([_imageInfos count] >= maxIndex, @"maxIndex error!");
     NSLog(@"mixIndex:%d maxIndex:%d", mixIndex, maxIndex);
@@ -305,9 +306,9 @@
 
 - (void)containerView:(ALContainerView *)cView didSelectIndex:(NSInteger)index
 {
-    NSLog(@"didSelectIndex:%d", cView.imageTag+index);
+    NSLog(@"didSelectIndex:%d", cView.groupTag+index);
     OriginalImageViewController *originalImageVC = [[OriginalImageViewController alloc] init];
-    NSDictionary *dic = [_imageInfos objectAtIndex:cView.imageTag+index];
+    NSDictionary *dic = [_imageInfos objectAtIndex:cView.groupTag+index];
     originalImageVC.url = [dic objectForKey:@"RemoteOriginal"];
     [self.navigationController pushViewController:originalImageVC animated:YES];
     [originalImageVC release];

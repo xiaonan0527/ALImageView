@@ -51,17 +51,54 @@ typedef void (^CSelectIndexBlock)(ALContainerView *cView, NSInteger index);
 
 @interface ALContainerView : UIView
 
+/**
+ If image count not equal to zero,the container view will layout image views with the patameter.
+ */
 @property (nonatomic, assign) ALContainerEdgeInsets edgeInsets;
+
+/**
+ If image count not equal to zero,the container view will layout image views with the patameter.
+ */
 @property (nonatomic, assign) ALContainerComposition composition;
+
+/**
+ Set the property to YES,the image view have four symmetric corner,corner radius equal to '10.0f'.
+ */
 @property (nonatomic, assign) BOOL isCorner;
-@property (nonatomic, assign) NSInteger imageTag;
+
+/**
+ Set a tag for image group in the container view.
+ */
+@property (nonatomic, assign) NSInteger groupTag;
+
+/**
+ The image count in the container view.
+ */
 @property (nonatomic, assign) NSUInteger imageCount;
+
+/**
+ Set image uri for images in the container view,and images will be loaded at once.
+ */
 @property (nonatomic, retain) NSArray *imageURLs;
 
+/**
+ Set delegate.
+ */
 @property (nonatomic, assign) id<NSObject, ALContainerViewDelegate> delegate;
 
-- (void)setImageCount:(NSUInteger)count imageTag:(NSInteger)tag;
-
+/**
+ Set block for callback.
+ 
+ @param block
+ */
 - (void)setSelectIndexBlock:(CSelectIndexBlock)block;
+
+/**
+ Set image count for layout image views with group tag.
+ 
+ @param count
+ @param tag
+ */
+- (void)setImageCount:(NSUInteger)count groupTag:(NSInteger)tag;
 
 @end

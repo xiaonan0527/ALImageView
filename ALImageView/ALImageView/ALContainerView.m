@@ -9,6 +9,10 @@
 #import "ALContainerView.h"
 #import "ALImageView.h"
 
+UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
+    return (count%column ? (count/column+1) : count/column);
+}
+
 @interface ALContainerView ()
 {
     NSMutableArray *_imageViews;
@@ -18,6 +22,18 @@
 @end
 
 @implementation ALContainerView
+
+- (void)setEdgeInsets:(ALContainerEdgeInsets)edgeInsets
+{
+    _edgeInsets = edgeInsets;
+    [self setNeedsLayout];
+}
+
+- (void)setComposition:(ALContainerComposition)composition
+{
+    _composition = composition;
+    [self setNeedsLayout];
+}
 
 - (void)setIsCorner:(BOOL)isCorner
 {
@@ -75,10 +91,10 @@
 
 - (void)commonInit
 {
-    _edgeInsets = ALContainerEdgeInsetsMake(20.f, 20.f, 40.f, 20.f);
+    _edgeInsets = ALContainerEdgeInsetsMake(20.f, 20.f, 20.f, 20.f);
     _composition = ALContainerCompositionMake(2, 3, 20.f, 16.f);
     [self setIsCorner:YES];
-    _imageTag = -UINT_MAX;
+    _groupTag = -UINT_MAX;
     _imageCount = 0;
 }
 
@@ -105,60 +121,48 @@
  }
  */
 
-- (void)setImageCount:(NSUInteger)count imageTag:(NSInteger)tag
+- (void)layoutSubviews
 {
-    self.imageTag = tag;
-    self.imageCount = count;
-    
-    if (_imageCount > 0) {
-        CGFloat xL = _edgeInsets.left;
-        CGFloat xR = _edgeInsets.right;
-        CGFloat yU = _edgeInsets.top;
-        CGFloat yD = _edgeInsets.bottom;
-        NSInteger columns = _composition.column;
-        NSInteger rows = _composition.row;
-        CGFloat xGap = _composition.gap.x;
-        CGFloat yGap = _composition.gap.y;
-        CGFloat width = (self.bounds.size.width-xL-xR-(columns-1)*xGap)/columns;
-        CGFloat height = (self.bounds.size.height-yU-yD-(rows-1)*yGap)/rows;
-        NSLog(@"width:%f height:%f", width, height);
-        if (nil == _imageViews) {
-            _imageViews = [[NSMutableArray alloc] init];
+    CGFloat xL = _edgeInsets.left;
+    CGFloat xR = _edgeInsets.right;
+    CGFloat yU = _edgeInsets.top;
+    CGFloat yD = _edgeInsets.bottom;
+    NSInteger column = _composition.column;
+    NSInteger row = _composition.row>=RowCount(self.imageCount, _composition.column) ? _composition.row : RowCount(self.imageCount, _composition.column);
+    CGFloat xGap = _composition.gap.x;
+    CGFloat yGap = _composition.gap.y;
+    CGFloat width = (self.bounds.size.width-xL-xR-(column-1)*xGap)/column;
+    CGFloat height = (self.bounds.size.height-yU-yD-(row-1)*yGap)/row;
+    NSLog(@"width:%f height:%f", width, height);
+    if (nil == _imageViews) {
+        _imageViews = [[NSMutableArray alloc] init];
+    }
+    int tempCount = [_imageViews count];
+    for (int j=0; j<row; j++) {
+        if (_imageCount <= column*j) {  // out of the loop when typesetting to the last
+            break;
         }
-        int tempCount = [_imageViews count];
-        for (int j=0; j<rows; j++) {
-            if (_imageCount <= columns*j) {  // out of the loop when typesetting to the last
+        for (int i=0; i<column; i++) {
+            NSLog(@"_imageCount:%d i+column*j:%d", _imageCount, i+column*j);
+            if (_imageCount <= i+column*j) {  // out of the loop when typesetting to the last
                 break;
             }
-            for (int i=0; i<columns; i++) {
-                NSLog(@"_imageCount:%d i+columns*j:%d", _imageCount, i+columns*j);
-                if (_imageCount <= i+columns*j) {  // out of the loop when typesetting to the last
-                    break;
-                }
-                ALImageView *alImageView = nil;
-                if (tempCount > i+columns*j) {
-                    alImageView = [[_imageViews objectAtIndex:i+columns*j] retain];
-                } else {
-                    alImageView = [[ALImageView alloc] initWithFrame:CGRectMake(xL+(xGap+width)*i, yU+(yGap+height)*j, width, height)];
-                    alImageView.placeholderImage = [UIImage imageNamed:@"img_pld"];
-                    alImageView.contentEdgeInsets = UIEdgeInsetsMake(3.f, 4.f, 3.f, 4.f);
-                    alImageView.index = i+j*columns;
-                    [alImageView addTarget:self action:@selector(didPressImageViewAction:)];
-                    [_imageViews addObject:alImageView];
-                    [self addSubview:alImageView];
-                }
-                [alImageView release];
-            }
-        }
-        
-        for (int i=0; i<[_imageViews count]; i++) {
-            ALImageView *alImageView = [_imageViews objectAtIndex:i];
-            if (_imageCount > i) {
-                alImageView.hidden = NO;
+            ALImageView *alImageView = nil;
+            if (tempCount > i+column*j) {
+                alImageView = [[_imageViews objectAtIndex:i+column*j] retain];
             } else {
-                alImageView.hidden = YES;
+                alImageView = [[ALImageView alloc] initWithFrame:CGRectMake(xL+(xGap+width)*i, yU+(yGap+height)*j, width, height)];
+                alImageView.placeholderImage = [UIImage imageNamed:@"img_pld"];
+                alImageView.contentEdgeInsets = UIEdgeInsetsMake(3.f, 4.f, 3.f, 4.f);
+                alImageView.index = i+j*column;
+                alImageView.isCorner = YES;
+                [alImageView addTarget:self action:@selector(didPressImageViewAction:)];
+                [_imageViews addObject:alImageView];
+                [self addSubview:alImageView];
             }
-        }    }
+            [alImageView release];
+        }
+    }
 }
 
 - (void)setSelectIndexBlock:(CSelectIndexBlock)block
@@ -174,6 +178,25 @@
     
     if (nil != block) {
         _selectIndexBlock = [block copy];
+    }
+}
+
+- (void)setImageCount:(NSUInteger)count groupTag:(NSInteger)tag
+{
+    self.groupTag = tag;
+    self.imageCount = count;
+    
+    if (_imageCount > 0) {
+        [self layoutIfNeeded];
+    }
+    
+    for (int i=0; i<[_imageViews count]; i++) {
+        ALImageView *alImageView = [_imageViews objectAtIndex:i];
+        if (_imageCount > i) {
+            alImageView.hidden = NO;
+        } else {
+            alImageView.hidden = YES;
+        }
     }
 }
 
