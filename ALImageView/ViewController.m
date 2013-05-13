@@ -8,6 +8,7 @@
 
 #import "ViewController.h"
 #import "PreviewImageViewController.h"
+#include "ALImageView.h"
 
 @interface ViewController ()
 
@@ -38,6 +39,13 @@
     }
     [pVC release];
     [nv release];
+}
+
+- (IBAction)didPressClearButtonAction:(id)sender
+{
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSError *error = nil;
+    [fm removeItemAtPath:[ALImageView localCacheDirectory] error:&error];
 }
 
 @end

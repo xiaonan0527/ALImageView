@@ -12,4 +12,6 @@
 
 - (IBAction)didPressStartButtonAction:(id)sender;
 
+- (IBAction)didPressClearButtonAction:(id)sender;
+
 @end
