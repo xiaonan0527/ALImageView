@@ -8,6 +8,7 @@
 
 #import "ALImageView.h"
 
+#define REQUEST_TIME_OUT_INTERVAL   30.f
 #define REQUEST_RETRY_COUNT   2
 
 @interface ALImageCache : NSCache
@@ -52,7 +53,7 @@
     UIActivityIndicatorView *_activityView;
     id _target;
     SEL _action;
-    NSInteger _requestCount;   // Add the count to reload a picture when the object is complex,
+    NSInteger _taskCount;   // Add the count to reload a picture when the object is complex,
                                // the old block, in effect, equivalent cancel
 }
 
@@ -206,6 +207,7 @@
         [_activityView release];
         _activityView = nil;
     }
+//    self.delegate = nil;
     [super dealloc];
 }
 
@@ -281,56 +283,53 @@
     [_activityView startAnimating];
     
     _asyncLoadImageFinished = NO;
-    _requestCount++;
+    _taskCount++;
+    
+    NSInteger countStamp = _taskCount;
     dispatch_block_t loadImageBlock = ^(void) {
         
-        NSURLRequest *request = [NSURLRequest requestWithURL:url];
-        NSInteger countStamp = _requestCount;
-        int retryCount = -1;
         NSData *data = nil;
         UIImage *img = nil;
         
-        NSURLResponse *response = nil;
-        NSError *error = nil;
-        do {
-            if (REQUEST_RETRY_COUNT <= retryCount) {break;}
-            else if (0 <= retryCount) {usleep(400);}
-            else {/*do nothing */}
-            response = nil;
-            error = nil;
+        NSURLRequest *request = [NSURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:REQUEST_TIME_OUT_INTERVAL];
+        int retryCount = -1;
+        while (REQUEST_RETRY_COUNT > retryCount && countStamp == _taskCount) {
+            NSLog(@"async load image start url:%@ countStamp:%d _taskCount:%d", [request.URL.absoluteString lastPathComponent], countStamp, _taskCount);
+            if (0 <= retryCount) {
+                NSLog(@"async load image usleep url:%@ countStamp:%d _taskCount:%d", [request.URL.absoluteString lastPathComponent], countStamp, _taskCount);
+                usleep(500*(retryCount+1));
+            }
+            
+            NSURLResponse *response = nil;
+            NSError *error = nil;
             data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
             retryCount++;
-            NSLog(@"async load image connection request retry count:%d expected length:%lld", retryCount, response.expectedContentLength);
-        } while (nil != error ||
-                 0 > response.expectedContentLength ||
-                 response.expectedContentLength > [data length]);
-        NSLog(@"async load image connection finished:%d error:%@", [data length], error);
-        
-        if (nil == error &&
-            0 < response.expectedContentLength &&
-            response.expectedContentLength == [data length]) {  // Tested may return the length of the data is empty or less
-            if (_localCacheEnabled) {
-                NSString *targetPath = [[ALImageView localCacheDirectory] stringByAppendingPathComponent:[[url absoluteString] lastPathComponent]];
-                NSError *error = nil;
-                [data writeToFile:targetPath options:NSDataWritingFileProtectionComplete error:&error];
-                NSLog(@"async load image targetPath:%@ error:%@", targetPath, error);
+            NSLog(@"async load image retry count:%d expected length:%lld", retryCount, response.expectedContentLength);
+            
+            if (nil == error &&
+                0 < response.expectedContentLength &&
+                response.expectedContentLength == [data length]) {  // Tested may return the length of the data is empty or less
+                if (_localCacheEnabled) {
+                    NSString *targetPath = [[ALImageView localCacheDirectory] stringByAppendingPathComponent:[[url absoluteString] lastPathComponent]];
+                    NSError *error = nil;
+                    [data writeToFile:targetPath options:NSDataWritingFileProtectionComplete error:&error];
+                    NSLog(@"async load image targetPath:%@ error:%@", targetPath, error);
+                }
+                img = [UIImage imageWithData:data];
+                break;
+            } else {
+                data = nil;
             }
-            img = [UIImage imageWithData:data];
-        } else {
-            data = nil;
+            NSLog(@"async load image end url:%@ countStamp:%d _taskCount:%d dataLength:%d", [self.imageURL lastPathComponent], countStamp, _taskCount, [data length]);
         }
         
         dispatch_async(dispatch_get_main_queue(), ^{
+            
             if (nil != img) {
-                if (countStamp == _requestCount) {   // Add the count to reload a picture when the object is complex,
-                                                     // the old block, in effect, equivalent cancel
+                if (countStamp == _taskCount) {   // Add the count to reload a picture when the object is complex,the old block, in effect, equivalent cancel
                     [self setImageWithAnimation:img];
                     _asyncLoadImageFinished = YES;
                     [_activityView stopAnimating];
-                    
-                    if ([_delegate respondsToSelector:@selector(imageView:didAsynchronousLoadImage:)]) {
-                        [_delegate imageView:self didAsynchronousLoadImage:img];
-                    }
                     
                     [[ALImageCache sharedInstance] cacheImage:img forImageURL:[url absoluteString]];
                     NSLog(@"async load image finish!");

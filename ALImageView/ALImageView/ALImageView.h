@@ -17,13 +17,13 @@ typedef enum {
     ALImageQueuePriorityHigh,
 } ALImageQueuePriority;
 
-@class ALImageView;
-@protocol ALImageViewDelegate <NSObject>
-
-@optional
-- (void)imageView:(ALImageView *)imgView didAsynchronousLoadImage:(UIImage *)img;
-
-@end
+//@class ALImageView;
+//@protocol ALImageViewDelegate <NSObject>
+//
+//@optional
+//- (void)imageView:(ALImageView *)imgView didAsynchronousLoadImage:(UIImage *)img;
+//
+//@end
 
 @interface ALImageView : UIImageView
 
@@ -80,10 +80,10 @@ typedef enum {
  */
 @property (nonatomic, retain) NSDictionary *userInfo;
 
-/**
- Set delegate.
- */
-@property (nonatomic, assign) id<NSObject, ALImageViewDelegate> delegate;
+///**
+// Set delegate.
+// */
+//@property (nonatomic, assign) id<NSObject, ALImageViewDelegate> delegate;
 
 /**
  Return local cache directory,the directory name can be change with macro definition,
