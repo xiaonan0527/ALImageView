@@ -7,5 +7,6 @@ Support local and memory cache;
 Support place holder;
 Support tap touch(target-action);
 Support corner for the image view;
+Support multi-image container;
 
 There is also a good demo in the project.
