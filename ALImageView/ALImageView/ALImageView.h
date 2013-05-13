@@ -92,6 +92,11 @@ typedef enum {
 + (NSString *)localCacheDirectory;
 
 /**
+ Clear all cache.
+ */
++ (BOOL)clearAllCache;
+
+/**
  Load image immediately with a image url and a place holder image.
  
  @param imageURL 

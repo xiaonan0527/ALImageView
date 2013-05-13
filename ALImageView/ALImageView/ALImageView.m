@@ -157,15 +157,36 @@
         if (0 < [cachesPath length]) {
             _localCacheDirectory = [[cachesPath stringByAppendingPathComponent:AL_IMAGE_VIEW_LOCAL_CAHCE_DIRECTORY] retain];
         }
+        
+        BOOL isDirectory = NO;
+        if (![[NSFileManager defaultManager] fileExistsAtPath:_localCacheDirectory isDirectory:&isDirectory] && isDirectory) {
+            NSError *error = nil;
+            [[NSFileManager defaultManager] createDirectoryAtPath:_localCacheDirectory withIntermediateDirectories:YES attributes:nil error:&error];
+        }
+        
         NSLog(@"local cache directory %@", _localCacheDirectory);
     });
     
-    if (![[NSFileManager defaultManager] fileExistsAtPath:_localCacheDirectory isDirectory:NULL]) {
-        NSError *error = nil;
-        [[NSFileManager defaultManager] createDirectoryAtPath:_localCacheDirectory withIntermediateDirectories:YES attributes:nil error:&error];
-    }
-    
     return _localCacheDirectory;
+}
+
++ (BOOL)clearAllCache
+{
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSError *error = nil;
+    
+    [fm removeItemAtPath:[ALImageView localCacheDirectory] error:&error];
+    if (nil == error) {
+        [fm createDirectoryAtPath:[ALImageView localCacheDirectory] withIntermediateDirectories:YES attributes:nil error:&error];
+        if (nil == error) {
+            [[ALImageCache sharedInstance] removeAllObjects];
+            return YES;
+        } else {
+            return NO;
+        }
+    } else {
+        return NO;
+    }
 }
 
 - (id)initWithCoder:(NSCoder *)aDecoder

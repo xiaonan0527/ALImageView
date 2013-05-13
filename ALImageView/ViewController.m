@@ -43,9 +43,7 @@
 
 - (IBAction)didPressClearButtonAction:(id)sender
 {
-    NSFileManager *fm = [NSFileManager defaultManager];
-    NSError *error = nil;
-    [fm removeItemAtPath:[ALImageView localCacheDirectory] error:&error];
+    [ALImageView clearAllCache];
 }
 
 @end
