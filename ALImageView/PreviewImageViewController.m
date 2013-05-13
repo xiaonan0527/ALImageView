@@ -178,6 +178,8 @@
             imageContainerView = [[ALContainerView alloc] initWithFrame:CGRectMake(i*bounds.size.width+x, y, width, height)];
             imageContainerView.backgroundColor = [UIColor colorWithWhite:0.f alpha:0.3f];
             imageContainerView.edgeInsets = ALContainerEdgeInsetsMake(14.f, 22.f, 14.f, 22.f);
+            imageContainerView.composition = ALContainerCompositionMake(2, 3, 20.f, 16.f);
+            imageContainerView.isCorner = YES;
             imageContainerView.delegate = self;
 //            [imageContainerView setSelectIndexBlock:block];
             [_containerViews addObject:imageContainerView];

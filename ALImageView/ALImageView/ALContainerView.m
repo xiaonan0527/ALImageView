@@ -94,9 +94,8 @@ UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
 
 - (void)commonInit
 {
-    _edgeInsets = ALContainerEdgeInsetsMake(20.f, 20.f, 20.f, 20.f);
-    _composition = ALContainerCompositionMake(2, 3, 20.f, 16.f);
-    [self setIsCorner:YES];
+    self.edgeInsets = ALContainerEdgeInsetsMake(20.f, 20.f, 20.f, 20.f);
+    self.composition = ALContainerCompositionMake(2, 3, 20.f, 16.f);
     _groupTag = -UINT_MAX;
 }
 
