@@ -15,7 +15,6 @@ UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
 
 @interface ALContainerView ()
 {
-    NSMutableArray *_imageViews;
     CSelectIndexBlock _selectIndexBlock;
 }
 
@@ -67,8 +66,12 @@ UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
     if (nil != imageURLs) {
         _imageURLs = [imageURLs retain];
         if (nil != _imageURLs) {
+            NSUInteger tempCount = [_imageViews count];
             int i = 0;
             for (NSString *u in _imageURLs) {
+                if (tempCount <= i) {
+                    break;
+                }
                 if (0 < [u length]) {
                     ALImageView *view = [_imageViews objectAtIndex:i];
                     view.imageURL = u;
@@ -95,7 +98,6 @@ UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
     _composition = ALContainerCompositionMake(2, 3, 20.f, 16.f);
     [self setIsCorner:YES];
     _groupTag = -UINT_MAX;
-    _imageCount = 0;
 }
 
 - (void)dealloc
@@ -123,44 +125,32 @@ UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
 
 - (void)layoutSubviews
 {
+    NSUInteger tempCount = [_imageViews count];
+    
     CGFloat xL = _edgeInsets.left;
     CGFloat xR = _edgeInsets.right;
     CGFloat yU = _edgeInsets.top;
     CGFloat yD = _edgeInsets.bottom;
     NSInteger column = _composition.column;
-    NSInteger row = _composition.row>=RowCount(self.imageCount, _composition.column) ? _composition.row : RowCount(self.imageCount, _composition.column);
+    NSInteger row = _composition.row>=RowCount(tempCount, _composition.column) ? _composition.row : RowCount(tempCount, _composition.column);
     CGFloat xGap = _composition.gap.x;
     CGFloat yGap = _composition.gap.y;
     CGFloat width = (self.bounds.size.width-xL-xR-(column-1)*xGap)/column;
     CGFloat height = (self.bounds.size.height-yU-yD-(row-1)*yGap)/row;
     NSLog(@"width:%f height:%f", width, height);
-    if (nil == _imageViews) {
-        _imageViews = [[NSMutableArray alloc] init];
-    }
-    int tempCount = [_imageViews count];
     for (int j=0; j<row; j++) {
-        if (_imageCount <= column*j) {  // out of the loop when typesetting to the last
+        if (tempCount <= column*j) {  // out of the loop when typesetting to the last
             break;
         }
         for (int i=0; i<column; i++) {
-            NSLog(@"_imageCount:%d i+column*j:%d", _imageCount, i+column*j);
-            if (_imageCount <= i+column*j) {  // out of the loop when typesetting to the last
+            NSLog(@"_imageCount:%d i+column*j:%d", tempCount, i+column*j);
+            if (tempCount <= i+column*j) {  // out of the loop when typesetting to the last
                 break;
             }
-            ALImageView *alImageView = nil;
-            if (tempCount > i+column*j) {
-                alImageView = [[_imageViews objectAtIndex:i+column*j] retain];
-            } else {
-                alImageView = [[ALImageView alloc] initWithFrame:CGRectMake(xL+(xGap+width)*i, yU+(yGap+height)*j, width, height)];
-                alImageView.placeholderImage = [UIImage imageNamed:@"img_pld"];
-                alImageView.contentEdgeInsets = UIEdgeInsetsMake(3.f, 4.f, 3.f, 4.f);
-                alImageView.index = i+j*column;
-                alImageView.isCorner = YES;
-                [alImageView addTarget:self action:@selector(didPressImageViewAction:)];
-                [_imageViews addObject:alImageView];
-                [self addSubview:alImageView];
-            }
-            [alImageView release];
+            ALImageView *alImageView = [_imageViews objectAtIndex:i+column*j];
+            alImageView.frame = CGRectMake(xL+(xGap+width)*i, yU+(yGap+height)*j, width, height);
+            alImageView.index = i+j*column;
+            [self addSubview:alImageView];
         }
     }
 }
@@ -184,20 +174,26 @@ UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
 - (void)setImageCount:(NSUInteger)count groupTag:(NSInteger)tag
 {
     self.groupTag = tag;
-    self.imageCount = count;
     
-    if (_imageCount > 0) {
-        [self layoutIfNeeded];
+    if (nil == _imageViews) {
+        _imageViews = [[NSMutableArray alloc] init];
+    }
+    while (count > [_imageViews count]) {
+        ALImageView *alImageView = [[ALImageView alloc] initWithFrame:CGRectZero];
+        alImageView.placeholderImage = [UIImage imageNamed:@"img_pld"];
+        alImageView.contentEdgeInsets = UIEdgeInsetsMake(3.f, 4.f, 3.f, 4.f);
+        alImageView.isCorner = YES;
+        [alImageView addTarget:self action:@selector(didPressImageViewAction:)];
+        [_imageViews addObject:alImageView];
     }
     
-    for (int i=0; i<[_imageViews count]; i++) {
+    for (int i=count; i<[_imageViews count]; i++) {
         ALImageView *alImageView = [_imageViews objectAtIndex:i];
-        if (_imageCount > i) {
-            alImageView.hidden = NO;
-        } else {
-            alImageView.hidden = YES;
-        }
+        [alImageView removeFromSuperview];
+        [_imageViews removeObject:alImageView];
     }
+    
+    [self layoutIfNeeded];
 }
 
 - (void)didPressImageViewAction:(id)sender

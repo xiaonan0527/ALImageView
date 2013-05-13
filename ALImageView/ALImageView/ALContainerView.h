@@ -72,9 +72,9 @@ typedef void (^CSelectIndexBlock)(ALContainerView *cView, NSInteger index);
 @property (nonatomic, assign) NSInteger groupTag;
 
 /**
- The image count in the container view.
+ The image views in the container view.
  */
-@property (nonatomic, assign) NSUInteger imageCount;
+@property (nonatomic, retain, readonly) NSMutableArray *imageViews;
 
 /**
  Set image uri for images in the container view,and images will be loaded at once.

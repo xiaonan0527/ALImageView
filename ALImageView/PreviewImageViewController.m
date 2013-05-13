@@ -255,12 +255,12 @@
 
 - (void)reloadImages:(ALContainerView *)containerView index:(NSInteger)index
 {
-    if (0 == containerView.imageCount) {
+    if (0 == [containerView.imageViews count]) {
         return;
     }
     NSMutableArray *imageURLs = [NSMutableArray array];
     NSInteger mixIndex = containerView.groupTag;
-    NSInteger maxIndex = containerView.groupTag+containerView.imageCount;
+    NSInteger maxIndex = containerView.groupTag+[containerView.imageViews count];
     NSAssert(0 <= mixIndex, @"mixIndex error!");
     NSAssert([_imageInfos count] >= maxIndex, @"maxIndex error!");
     NSLog(@"mixIndex:%d maxIndex:%d", mixIndex, maxIndex);
