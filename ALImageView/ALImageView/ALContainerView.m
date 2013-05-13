@@ -48,36 +48,36 @@ UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
 
 - (void)setImageURLs:(NSArray *)imageURLs
 {
-    if (imageURLs == _imageURLs) {
-        return;
+    if (_imageURLs != imageURLs) {
+        if (nil != _imageURLs) {
+            int i = 0;
+            for (NSString *u in _imageURLs) {
+                ALImageView *view = [_imageViews objectAtIndex:i];
+                view.imageURL = nil;
+                i++;
+            }
+            [_imageURLs release];
+            _imageURLs = nil;
+        }
+        
+        if (nil != imageURLs) {
+            _imageURLs = [imageURLs retain];
+            
+        }
     }
     
     if (nil != _imageURLs) {
+        NSUInteger tempCount = [_imageViews count];
         int i = 0;
         for (NSString *u in _imageURLs) {
-            ALImageView *view = [_imageViews objectAtIndex:i];
-            view.imageURL = nil;
-            i++;
-        }
-        [_imageURLs release];
-        _imageURLs = nil;
-    }
-    
-    if (nil != imageURLs) {
-        _imageURLs = [imageURLs retain];
-        if (nil != _imageURLs) {
-            NSUInteger tempCount = [_imageViews count];
-            int i = 0;
-            for (NSString *u in _imageURLs) {
-                if (tempCount <= i) {
-                    break;
-                }
-                if (0 < [u length]) {
-                    ALImageView *view = [_imageViews objectAtIndex:i];
-                    view.imageURL = u;
-                }
-                i++;
+            if (tempCount <= i) {
+                break;
             }
+            if (0 < [u length]) {
+                ALImageView *view = [_imageViews objectAtIndex:i];
+                view.imageURL = u;
+            }
+            i++;
         }
     }
 }

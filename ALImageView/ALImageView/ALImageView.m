@@ -65,17 +65,15 @@
 
 - (void)setPlaceholderImage:(UIImage *)placeholderImage
 {
-    if (_placeholderImage == placeholderImage) {
-        return;
-    }
-    
-    if (nil != _placeholderImage) {
-        [_placeholderImage release];
-        _placeholderImage = nil;
-    }
-    
-    if (nil != placeholderImage) {
-        _placeholderImage = [placeholderImage retain];
+    if (_placeholderImage != placeholderImage) {
+        if (nil != _placeholderImage) {
+            [_placeholderImage release];
+            _placeholderImage = nil;
+        }
+        
+        if (nil != placeholderImage) {
+            _placeholderImage = [placeholderImage retain];
+        }
     }
     
     self.image = _placeholderImage;
@@ -83,22 +81,20 @@
 
 - (void)setImageURL:(NSString *)imageURL
 {
-    if (_imageURL == imageURL) {
-        return;
-    }
-    
-    if (nil != _imageURL) {
-        if (nil != _placeholderImage) {
-            self.image = _placeholderImage;
-        } else {
-            self.image = nil;
+    if (_imageURL != imageURL) {
+        if (nil != _imageURL) {
+            if (nil != _placeholderImage) {
+                self.image = _placeholderImage;
+            } else {
+                self.image = nil;
+            }
+            [_imageURL release];
+            _imageURL = nil;
         }
-        [_imageURL release];
-        _imageURL = nil;
-    }
-    
-    if (nil != imageURL) {
-        _imageURL = [imageURL retain];
+        
+        if (nil != imageURL) {
+            _imageURL = [imageURL retain];
+        }
     }
     
     if (0 < [_imageURL length]) {
