@@ -148,7 +148,7 @@
 }
 
 + (NSString *)localCacheDirectory
-{    
+{
     static NSString *_localCacheDirectory = nil;
     static dispatch_once_t _oncePredicate;
     dispatch_once(&_oncePredicate, ^{
@@ -156,15 +156,15 @@
         NSString *cachesPath = ([paths count] > 0) ? [paths objectAtIndex:0] : nil;
         if (0 < [cachesPath length]) {
             _localCacheDirectory = [[cachesPath stringByAppendingPathComponent:AL_IMAGE_VIEW_LOCAL_CAHCE_DIRECTORY] retain];
-            
-            BOOL isDirectory = YES;
-            if (![[NSFileManager defaultManager] fileExistsAtPath:_localCacheDirectory isDirectory:&isDirectory] || !isDirectory) {
-                NSError *error = nil;
-                [[NSFileManager defaultManager] createDirectoryAtPath:_localCacheDirectory withIntermediateDirectories:YES attributes:nil error:&error];
-            }
         }
         NSLog(@"local cache directory %@", _localCacheDirectory);
     });
+    
+    if (![[NSFileManager defaultManager] fileExistsAtPath:_localCacheDirectory isDirectory:NULL]) {
+        NSError *error = nil;
+        [[NSFileManager defaultManager] createDirectoryAtPath:_localCacheDirectory withIntermediateDirectories:YES attributes:nil error:&error];
+    }
+    
     return _localCacheDirectory;
 }
 
