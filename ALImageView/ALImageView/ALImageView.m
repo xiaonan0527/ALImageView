@@ -8,174 +8,97 @@
 
 #import "ALImageView.h"
 
-#define REQUEST_TIME_OUT_INTERVAL   30.f
-#define REQUEST_RETRY_COUNT   2
-
-@interface ALImageCache : NSCache
-
-+ (ALImageCache *)sharedInstance;
-
-- (UIImage *)cachedImageForImageURL:(NSString *)url;
-
-- (void)cacheImage:(UIImage *)image forImageURL:(NSString *)url;
-
-@end
+const NSString * LOCAL_CAHCE_DIRECTORY_DEFAULT = @"com.springox.ALImageView";
 
 @implementation ALImageCache
 
-+ (ALImageCache *)sharedInstance {
++ (ALImageCache *)sharedInstance
+{
     static ALImageCache *_imageCache = nil;
     static dispatch_once_t _oncePredicate;
     dispatch_once(&_oncePredicate, ^{
-        _imageCache = [[ALImageCache alloc] init];
+        @autoreleasepool {
+            _imageCache = [[ALImageCache alloc] init];
+            _imageCache.memoryCache = [[[NSCache alloc] init] autorelease];
+            
+            NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
+            NSString *cachesPath = ([paths count] > 0) ? [paths objectAtIndex:0] : nil;
+            if (0 < [cachesPath length]) {
+                _imageCache.localCacheDirectory = [cachesPath stringByAppendingPathComponent:(NSString *)LOCAL_CAHCE_DIRECTORY_DEFAULT];
+            }
+        }
     });
     return _imageCache;
 }
 
-- (UIImage *)cachedImageForImageURL:(NSString *)url
+- (void)dealloc
 {
-	return [self objectForKey:url];
+    self.memoryCache = nil;
+    self.localCacheDirectory = nil;
+    [super dealloc];
 }
 
-- (void)cacheImage:(UIImage *)image forImageURL:(NSString *)url
+#pragma mark ALImageCache (public)
+
+- (void)setLocalCacheDirectory:(NSString *)localCacheDirectory
 {
-    if (image && url) {
-        [self setObject:image forKey:url];
-    }
-}
-
-@end
-
-
-@interface ALImageView ()
-{
-    UIImage *_placeholderImage;
-    UIActivityIndicatorView *_activityView;
-    id _target;
-    SEL _action;
-    NSInteger _taskCount;   // Add the count to reload a picture when the object is complex,
-                               // the old block, in effect, equivalent cancel
-}
-
-- (UIImage *)insertBgImage:(UIImage *)bgImage toImage:(UIImage *)image;
-
-@end
-
-@implementation ALImageView
-
-- (void)setPlaceholderImage:(UIImage *)placeholderImage
-{
-    if (_placeholderImage != placeholderImage) {
-        if (nil != _placeholderImage) {
-            [_placeholderImage release];
-            _placeholderImage = nil;
+    if (_localCacheDirectory != localCacheDirectory) {
+        if (nil != _localCacheDirectory) {
+            [_localCacheDirectory release];
+            _localCacheDirectory = nil;
         }
         
-        if (nil != placeholderImage) {
-            _placeholderImage = [placeholderImage retain];
+        if (nil != localCacheDirectory) {
+            _localCacheDirectory = [localCacheDirectory retain];
         }
     }
     
-    self.image = _placeholderImage;
-}
-
-- (void)setImageURL:(NSString *)imageURL
-{
-    if (_imageURL != imageURL) {
-        if (nil != _imageURL) {
-            if (nil != _placeholderImage) {
-                self.image = _placeholderImage;
-            } else {
-                self.image = nil;
-            }
-            [_imageURL release];
-            _imageURL = nil;
-        }
-        
-        if (nil != imageURL) {
-            _imageURL = [imageURL retain];
-        }
-    }
-    
-    if (0 < [_imageURL length]) {
-        UIImage *img = [[ALImageCache sharedInstance] cachedImageForImageURL:_imageURL];
-        if (nil != img) {
-            [self setImageWithPlaceholder:img];
-            NSLog(@"load memory cache image!");
-            return;
-        }
-        if (_localCacheEnabled) {
-            NSString *imgCachePath = [[ALImageView localCacheDirectory] stringByAppendingPathComponent:[_imageURL lastPathComponent]];
-            if ([[NSFileManager defaultManager] fileExistsAtPath:imgCachePath]) {
-                UIImage *img = [UIImage imageWithContentsOfFile:imgCachePath];
-                [self setImageWithPlaceholder:img];
-                [[ALImageCache sharedInstance] cacheImage:img forImageURL:_imageURL];
-                NSLog(@"load local cache image!");
-                return;
-            }
-        }
-        [self asyncLoadImageWithURL:[NSURL URLWithString:[_imageURL stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]]];
-        NSLog(@"load async remote image!");
-    }
-}
-
-- (void)setIndicatorEnabled:(BOOL)indicatorEnabled
-{
-    _indicatorEnabled = indicatorEnabled;
-    if (!_indicatorEnabled) {
-        if (nil != _activityView) {
-            [_activityView stopAnimating];
-            [_activityView release];
-            _activityView = nil;
-        }
-    }
-}
-
-- (void)setIsCorner:(BOOL)isCorner
-{
-    _isCorner = isCorner;
-    if (_isCorner) {
-        self.layer.cornerRadius = 10.0f;
-        self.clipsToBounds = YES;
-    } else {
-        self.layer.cornerRadius = 0.0f;
-        self.clipsToBounds = NO;
-    }
-}
-
-+ (NSString *)localCacheDirectory
-{
-    static NSString *_localCacheDirectory = nil;
-    static dispatch_once_t _oncePredicate;
-    dispatch_once(&_oncePredicate, ^{
-        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-        NSString *cachesPath = ([paths count] > 0) ? [paths objectAtIndex:0] : nil;
-        if (0 < [cachesPath length]) {
-            _localCacheDirectory = [[cachesPath stringByAppendingPathComponent:AL_IMAGE_VIEW_LOCAL_CAHCE_DIRECTORY] retain];
-        }
-        
-        BOOL isDirectory = NO;
-        if (![[NSFileManager defaultManager] fileExistsAtPath:_localCacheDirectory isDirectory:&isDirectory] && isDirectory) {
+    if (0 < [_localCacheDirectory length]) {
+        BOOL isDirectory = YES;
+        if (![[NSFileManager defaultManager] fileExistsAtPath:_localCacheDirectory isDirectory:&isDirectory] && !isDirectory) {
             NSError *error = nil;
             [[NSFileManager defaultManager] createDirectoryAtPath:_localCacheDirectory withIntermediateDirectories:YES attributes:nil error:&error];
         }
-        
-        NSLog(@"local cache directory %@", _localCacheDirectory);
-    });
-    
-    return _localCacheDirectory;
+    }
 }
 
-+ (BOOL)clearAllCache
+- (UIImage *)cachedImageForImageURL:(NSString *)url fromLocal:(BOOL)localEnabled
+{
+    UIImage *img = [self cachedImageForImageURL:url];
+    if (nil == img && localEnabled) {
+        NSString *localCachePath = [self.localCacheDirectory stringByAppendingPathComponent:[url lastPathComponent]];
+        if ([[NSFileManager defaultManager] fileExistsAtPath:localCachePath]) {
+            img = [UIImage imageWithContentsOfFile:localCachePath];
+            [self cacheImage:img forImageURL:url];
+            NSLog(@"cached image localCachePath:%@", localCachePath);
+        }
+    }
+	return img;
+}
+
+- (UIImage *)cacheImage:(NSData *)data forImageURL:(NSString *)url toLocal:(BOOL)localEnabled
+{
+    UIImage *img = [UIImage imageWithData:data];
+    [self cacheImage:img forImageURL:url];
+    if (localEnabled) {
+        NSString *localCachePath = [self.localCacheDirectory stringByAppendingPathComponent:[url lastPathComponent]];
+        NSError *error = nil;
+        [data writeToFile:localCachePath options:NSDataWritingFileProtectionComplete error:&error];
+        NSLog(@"cache image localCachePath:%@ error:%@", localCachePath, error);
+    }
+    return img;
+}
+
+- (BOOL)clearCache
 {
     NSFileManager *fm = [NSFileManager defaultManager];
     NSError *error = nil;
     
-    [fm removeItemAtPath:[ALImageView localCacheDirectory] error:&error];
+    [fm removeItemAtPath:self.localCacheDirectory error:&error];
     if (nil == error) {
-        [fm createDirectoryAtPath:[ALImageView localCacheDirectory] withIntermediateDirectories:YES attributes:nil error:&error];
+        self.localCacheDirectory = self.localCacheDirectory;
         if (nil == error) {
-            [[ALImageCache sharedInstance] removeAllObjects];
+            [self.memoryCache removeAllObjects];
             return YES;
         } else {
             return NO;
@@ -184,6 +107,42 @@
         return NO;
     }
 }
+
+#pragma mark ALImageCache (private)
+
+- (UIImage *)cachedImageForImageURL:(NSString *)url
+{
+	return [self.memoryCache objectForKey:url];
+}
+
+- (void)cacheImage:(UIImage *)image forImageURL:(NSString *)url
+{
+    if (image && url) {
+        [self.memoryCache setObject:image forKey:url];
+    }
+}
+
+
+@end
+
+
+const NSTimeInterval REQUEST_TIME_OUT_INTERVAL = 30.f;
+
+const int REQUEST_RETRY_COUNT = 2;
+
+@interface ALImageView ()
+{
+    UIImage *_placeholderImage;
+    UIActivityIndicatorView *_activityView;
+    id _target;
+    SEL _action;
+    NSInteger _taskCount;      // Add the count to reload a picture when the object is complex,
+                               // the old block, in effect, equivalent cancel
+}
+
+@end
+
+@implementation ALImageView
 
 - (id)initWithCoder:(NSCoder *)aDecoder
 {
@@ -224,18 +183,106 @@
         [_activityView release];
         _activityView = nil;
     }
-//    self.delegate = nil;
     [super dealloc];
 }
 
+#pragma mark ALImageView (public)
+
 /*
-// Only override drawRect: if you perform custom drawing.
-// An empty implementation adversely affects performance during animation.
-- (void)drawRect:(CGRect)rect
+ // Only override drawRect: if you perform custom drawing.
+ // An empty implementation adversely affects performance during animation.
+ - (void)drawRect:(CGRect)rect
+ {
+ // Drawing code
+ }
+ */
+
+- (void)setPlaceholderImage:(UIImage *)placeholderImage
 {
-    // Drawing code
+    if (_placeholderImage != placeholderImage) {
+        if (nil != _placeholderImage) {
+            [_placeholderImage release];
+            _placeholderImage = nil;
+        }
+        
+        if (nil != placeholderImage) {
+            _placeholderImage = [placeholderImage retain];
+        }
+    }
+    
+    self.image = _placeholderImage;
 }
-*/
+
+- (void)setImageURL:(NSString *)imageURL
+{
+    if (_imageURL != imageURL) {
+        if (nil != _imageURL) {
+            if (nil != _placeholderImage) {
+                self.image = _placeholderImage;
+            } else {
+                self.image = nil;
+            }
+            [_imageURL release];
+            _imageURL = nil;
+        }
+        
+        if (nil != imageURL) {
+            _imageURL = [imageURL retain];
+        }
+    }
+    
+    if (0 < [_imageURL length]) {
+        UIImage *img = [[ALImageCache sharedInstance] cachedImageForImageURL:_imageURL fromLocal:_localCacheEnabled];
+        if (nil != img) {
+            [self setImageWithPlaceholder:img];
+            return;
+        }
+        [self asyncLoadImageWithURL:[NSURL URLWithString:[_imageURL stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]]];
+        NSLog(@"load async remote image!");
+    }
+}
+
+- (void)setIndicatorEnabled:(BOOL)indicatorEnabled
+{
+    _indicatorEnabled = indicatorEnabled;
+    if (!_indicatorEnabled) {
+        if (nil != _activityView) {
+            [_activityView stopAnimating];
+            [_activityView release];
+            _activityView = nil;
+        }
+    }
+}
+
+- (void)setIsCorner:(BOOL)isCorner
+{
+    _isCorner = isCorner;
+    if (_isCorner) {
+        self.layer.cornerRadius = 10.0f;
+        self.clipsToBounds = YES;
+    } else {
+        self.layer.cornerRadius = 0.0f;
+        self.clipsToBounds = NO;
+    }
+}
+
+- (void)loadImage:(NSString *)imageURL placeholderImage:(UIImage *)placeholderImage
+{
+    self.placeholderImage = placeholderImage;
+    self.imageURL = imageURL;
+}
+
+- (void)addTarget:(id)target action:(SEL)action
+{
+    _target = target;
+    _action = action;
+    self.userInteractionEnabled = YES;
+    UITapGestureRecognizer *gestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(didTapGestureRecognizer:)];
+    [self addGestureRecognizer:gestureRecognizer];
+    [gestureRecognizer release];
+}
+
+#pragma mark ALImageView (private)
 
 - (UIImage *)insertBgImage:(UIImage *)bgImage toImage:(UIImage *)image
 {
@@ -280,12 +327,6 @@
                      completion:nil];
 }
 
-- (void)loadImage:(NSString *)imageURL placeholderImage:(UIImage *)placeholderImage
-{
-    self.placeholderImage = placeholderImage;
-    self.imageURL = imageURL;
-}
-
 - (void)asyncLoadImageWithURL:(NSURL *)url
 {
     if (_indicatorEnabled && nil == _activityView) {
@@ -326,13 +367,7 @@
             if (nil == error &&
                 0 < response.expectedContentLength &&
                 response.expectedContentLength == [data length]) {  // Tested may return the length of the data is empty or less
-                if (_localCacheEnabled) {
-                    NSString *targetPath = [[ALImageView localCacheDirectory] stringByAppendingPathComponent:[[url absoluteString] lastPathComponent]];
-                    NSError *error = nil;
-                    [data writeToFile:targetPath options:NSDataWritingFileProtectionComplete error:&error];
-                    NSLog(@"async load image targetPath:%@ error:%@", targetPath, error);
-                }
-                img = [UIImage imageWithData:data];
+                img = [[ALImageCache sharedInstance] cacheImage:data forImageURL:[url absoluteString] toLocal:_localCacheEnabled];
                 break;
             } else {
                 data = nil;
@@ -347,8 +382,6 @@
                     [self setImageWithAnimation:img];
                     _asyncLoadImageFinished = YES;
                     [_activityView stopAnimating];
-                    
-                    [[ALImageCache sharedInstance] cacheImage:img forImageURL:[url absoluteString]];
                     NSLog(@"async load image finish!");
                 }
             } else {
@@ -371,16 +404,6 @@
         }
         dispatch_async(imageQueue, loadImageBlock);
     }
-}
-
-- (void)addTarget:(id)target action:(SEL)action
-{
-    _target = target;
-    _action = action;
-    self.userInteractionEnabled = YES;
-    UITapGestureRecognizer *gestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(didTapGestureRecognizer:)];
-    [self addGestureRecognizer:gestureRecognizer];
-    [gestureRecognizer release];
 }
 
 - (void)didTapGestureRecognizer:(id)sender

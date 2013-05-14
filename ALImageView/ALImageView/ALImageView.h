@@ -9,21 +9,55 @@
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>
 
-#define AL_IMAGE_VIEW_LOCAL_CAHCE_DIRECTORY   @"ALImages"
+@interface ALImageCache : NSObject
+
+/**
+ Share a single case
+ */
++ (ALImageCache *)sharedInstance;
+
+/**
+ Set a memory cache.
+ */
+@property (nonatomic, retain) NSCache *memoryCache;
+
+/**
+ Set a local cache directory.
+ */
+@property (nonatomic, retain) NSString *localCacheDirectory;
+
+/**
+ Return image from memory cache,if memory cache unfind and localEnabled equal to YES,
+ return image from local cache.
+ 
+ @param url
+ @param localEnabled
+ */
+- (UIImage *)cachedImageForImageURL:(NSString *)url fromLocal:(BOOL)localEnabled;
+
+/**
+ Cache data for image to memory cache,and localEnabled equal to YES,
+ cache to local cache also.
+ 
+ @param data
+ @param url
+ @param localEnabled
+ */
+- (UIImage *)cacheImage:(NSData *)data forImageURL:(NSString *)url toLocal:(BOOL)localEnabled;
+
+/**
+ Clear memory cache and local cache.
+ */
+- (BOOL)clearCache;
+
+@end
+
 
 typedef enum {
     ALImageQueuePriorityLow = 0,
     ALImageQueuePriorityNormal,
     ALImageQueuePriorityHigh,
 } ALImageQueuePriority;
-
-//@class ALImageView;
-//@protocol ALImageViewDelegate <NSObject>
-//
-//@optional
-//- (void)imageView:(ALImageView *)imgView didAsynchronousLoadImage:(UIImage *)img;
-//
-//@end
 
 @interface ALImageView : UIImageView
 
@@ -79,22 +113,6 @@ typedef enum {
  Set some user infomation,default value is 'nil'.
  */
 @property (nonatomic, retain) NSDictionary *userInfo;
-
-///**
-// Set delegate.
-// */
-//@property (nonatomic, assign) id<NSObject, ALImageViewDelegate> delegate;
-
-/**
- Return local cache directory,the directory name can be change with macro definition,
- but the parent directory must be caches directory in sandbox mechanism.
- */
-+ (NSString *)localCacheDirectory;
-
-/**
- Clear all cache.
- */
-+ (BOOL)clearAllCache;
 
 /**
  Load image immediately with a image url and a place holder image.

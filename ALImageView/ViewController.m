@@ -43,7 +43,7 @@
 
 - (IBAction)didPressClearButtonAction:(id)sender
 {
-    [ALImageView clearAllCache];
+    [[ALImageCache sharedInstance] clearCache];
 }
 
 @end
