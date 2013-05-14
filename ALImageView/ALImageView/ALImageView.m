@@ -76,7 +76,7 @@ const NSString * LOCAL_CAHCE_DIRECTORY_DEFAULT = @"com.springox.ALImageView";
 	return img;
 }
 
-- (UIImage *)cacheImage:(NSData *)data forImageURL:(NSString *)url toLocal:(BOOL)localEnabled
+- (UIImage *)cacheImageWithData:(NSData *)data forImageURL:(NSString *)url toLocal:(BOOL)localEnabled
 {
     UIImage *img = [UIImage imageWithData:data];
     [self cacheImage:img forKey:url];
@@ -368,7 +368,7 @@ const int REQUEST_RETRY_COUNT = 2;
             if (nil == error &&
                 0 < response.expectedContentLength &&
                 response.expectedContentLength == [data length]) {  // Tested may return the length of the data is empty or less
-                img = [[ALImageCache sharedInstance] cacheImage:data forImageURL:[url absoluteString] toLocal:_localCacheEnabled];
+                img = [[ALImageCache sharedInstance] cacheImageWithData:data forImageURL:[url absoluteString] toLocal:_localCacheEnabled];
                 break;
             } else {
                 data = nil;

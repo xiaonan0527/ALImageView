@@ -7,6 +7,7 @@
 //
 
 #import "ViewController.h"
+#import "ListImageViewController.h"
 #import "PreviewImageViewController.h"
 #include "ALImageView.h"
 
@@ -29,7 +30,20 @@
 }
 
 - (IBAction)didPressStartButtonAction:(id)sender
-{    
+{
+    ListImageViewController *pVC = [[ListImageViewController alloc] initWithNibName:@"ListImageViewController" bundle:nil];
+    UINavigationController *nv = [[UINavigationController alloc] initWithRootViewController:pVC];
+    if ([self respondsToSelector:@selector(presentViewController:animated:completion:)]) {
+        [self presentViewController:nv animated:YES completion:nil];
+    } else {
+        [self presentModalViewController:nv animated:YES];
+    }
+    [pVC release];
+    [nv release];
+}
+
+- (IBAction)didPressStartButton2Action:(id)sender
+{
     PreviewImageViewController *pVC = [[PreviewImageViewController alloc] initWithNibName:@"PreviewImageViewController" bundle:nil];
     UINavigationController *nv = [[UINavigationController alloc] initWithRootViewController:pVC];
     if ([self respondsToSelector:@selector(presentViewController:animated:completion:)]) {

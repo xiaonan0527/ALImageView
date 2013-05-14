@@ -43,7 +43,7 @@
  @param url
  @param localEnabled
  */
-- (UIImage *)cacheImage:(NSData *)data forImageURL:(NSString *)url toLocal:(BOOL)localEnabled;
+- (UIImage *)cacheImageWithData:(NSData *)data forImageURL:(NSString *)url toLocal:(BOOL)localEnabled;
 
 /**
  Clear memory cache and local cache.

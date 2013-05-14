@@ -50,8 +50,12 @@ UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
 {
     if (_imageURLs != imageURLs) {
         if (nil != _imageURLs) {
+            NSUInteger tempCount = [_imageViews count];
             int i = 0;
             for (NSString *u in _imageURLs) {
+                if (tempCount == i) {
+                    break;
+                }
                 ALImageView *view = [_imageViews objectAtIndex:i];
                 view.imageURL = nil;
                 i++;
@@ -70,7 +74,7 @@ UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
         NSUInteger tempCount = [_imageViews count];
         int i = 0;
         for (NSString *u in _imageURLs) {
-            if (tempCount <= i) {
+            if (tempCount == i) {
                 break;
             }
             if (0 < [u length]) {
@@ -124,6 +128,27 @@ UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
 
 - (void)layoutSubviews
 {
+    [self layoutImageViews];
+}
+
+- (void)setSelectIndexBlock:(CSelectIndexBlock)block
+{
+    if (_selectIndexBlock == block) {
+        return;
+    }
+    
+    if (nil != _selectIndexBlock) {
+        [_selectIndexBlock release];
+        _selectIndexBlock = nil;
+    }
+    
+    if (nil != block) {
+        _selectIndexBlock = [block copy];
+    }
+}
+
+- (void)layoutImageViews
+{
     NSUInteger tempCount = [_imageViews count];
     
     CGFloat xL = _edgeInsets.left;
@@ -154,22 +179,6 @@ UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
     }
 }
 
-- (void)setSelectIndexBlock:(CSelectIndexBlock)block
-{
-    if (_selectIndexBlock == block) {
-        return;
-    }
-    
-    if (nil != _selectIndexBlock) {
-        [_selectIndexBlock release];
-        _selectIndexBlock = nil;
-    }
-    
-    if (nil != block) {
-        _selectIndexBlock = [block copy];
-    }
-}
-
 - (void)setImageCount:(NSUInteger)count groupTag:(NSInteger)tag
 {
     self.groupTag = tag;
@@ -177,6 +186,7 @@ UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
     if (nil == _imageViews) {
         _imageViews = [[NSMutableArray alloc] init];
     }
+    
     while (count > [_imageViews count]) {
         ALImageView *alImageView = [[ALImageView alloc] initWithFrame:CGRectZero];
         alImageView.placeholderImage = [UIImage imageNamed:@"img_pld"];
@@ -185,14 +195,14 @@ UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
         [alImageView addTarget:self action:@selector(didPressImageViewAction:)];
         [_imageViews addObject:alImageView];
     }
-    
-    for (int i=count; i<[_imageViews count]; i++) {
-        ALImageView *alImageView = [_imageViews objectAtIndex:i];
+
+    while (count < [_imageViews count]) {
+        ALImageView *alImageView = [_imageViews lastObject];
         [alImageView removeFromSuperview];
         [_imageViews removeObject:alImageView];
     }
     
-    [self layoutIfNeeded];
+    [self layoutImageViews];
 }
 
 - (void)didPressImageViewAction:(id)sender
