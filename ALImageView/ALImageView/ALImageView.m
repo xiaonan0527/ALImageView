@@ -64,12 +64,12 @@ const NSString * LOCAL_CAHCE_DIRECTORY_DEFAULT = @"com.springox.ALImageView";
 
 - (UIImage *)cachedImageForImageURL:(NSString *)url fromLocal:(BOOL)localEnabled
 {
-    UIImage *img = [self cachedImageForImageURL:url];
+    UIImage *img = [self cachedImageForKey:url];
     if (nil == img && localEnabled) {
         NSString *localCachePath = [self.localCacheDirectory stringByAppendingPathComponent:[url lastPathComponent]];
         if ([[NSFileManager defaultManager] fileExistsAtPath:localCachePath]) {
             img = [UIImage imageWithContentsOfFile:localCachePath];
-            [self cacheImage:img forImageURL:url];
+            [self cacheImage:img forKey:url];
             NSLog(@"cached image localCachePath:%@", localCachePath);
         }
     }
@@ -79,7 +79,7 @@ const NSString * LOCAL_CAHCE_DIRECTORY_DEFAULT = @"com.springox.ALImageView";
 - (UIImage *)cacheImage:(NSData *)data forImageURL:(NSString *)url toLocal:(BOOL)localEnabled
 {
     UIImage *img = [UIImage imageWithData:data];
-    [self cacheImage:img forImageURL:url];
+    [self cacheImage:img forKey:url];
     if (localEnabled) {
         NSString *localCachePath = [self.localCacheDirectory stringByAppendingPathComponent:[url lastPathComponent]];
         NSError *error = nil;
@@ -110,21 +110,22 @@ const NSString * LOCAL_CAHCE_DIRECTORY_DEFAULT = @"com.springox.ALImageView";
 
 #pragma mark ALImageCache (private)
 
-- (UIImage *)cachedImageForImageURL:(NSString *)url
+- (UIImage *)cachedImageForKey:(NSString *)key
 {
-	return [self.memoryCache objectForKey:url];
+	return [self.memoryCache objectForKey:key];
 }
 
-- (void)cacheImage:(UIImage *)image forImageURL:(NSString *)url
+- (void)cacheImage:(UIImage *)image forKey:(NSString *)key
 {
-    if (image && url) {
-        [self.memoryCache setObject:image forKey:url];
+    if (image && key) {
+        [self.memoryCache setObject:image forKey:key];
     }
 }
 
 
 @end
 
+#pragma mark -
 
 const NSTimeInterval REQUEST_TIME_OUT_INTERVAL = 30.f;
 
@@ -238,7 +239,7 @@ const int REQUEST_RETRY_COUNT = 2;
             return;
         }
         [self asyncLoadImageWithURL:[NSURL URLWithString:[_imageURL stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]]];
-        NSLog(@"load async remote image!");
+        NSLog(@"load image from remote server!");
     }
 }
 

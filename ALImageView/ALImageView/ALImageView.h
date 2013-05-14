@@ -52,6 +52,7 @@
 
 @end
 
+#pragma mark -
 
 typedef enum {
     ALImageQueuePriorityLow = 0,

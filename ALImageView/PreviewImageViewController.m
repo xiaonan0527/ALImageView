@@ -103,7 +103,7 @@
 {
     [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
     UIActivityIndicatorView *activityView = [[[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray] autorelease];
-    activityView.center = self.view.center;
+    activityView.center = self.navigationController.view.center;
     [activityView startAnimating];
     [self.view addSubview:activityView];
     
