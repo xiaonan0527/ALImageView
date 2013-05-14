@@ -93,16 +93,16 @@ const NSString * LOCAL_CAHCE_DIRECTORY_DEFAULT = @"com.springox.ALImageView";
 {
     NSFileManager *fm = [NSFileManager defaultManager];
     NSError *error = nil;
-    
-    [fm removeItemAtPath:self.localCacheDirectory error:&error];
+
+    NSArray *contents = [fm contentsOfDirectoryAtPath:_localCacheDirectory error:&error];
+    for(NSString *itemName in contents){
+        NSString *fullPathName = [_localCacheDirectory stringByAppendingPathComponent:itemName];
+        error = nil;
+        [fm removeItemAtPath:fullPathName error:&error];
+    }
     if (nil == error) {
-        self.localCacheDirectory = self.localCacheDirectory;
-        if (nil == error) {
-            [self.memoryCache removeAllObjects];
-            return YES;
-        } else {
-            return NO;
-        }
+        [self.memoryCache removeAllObjects];
+        return YES;
     } else {
         return NO;
     }
