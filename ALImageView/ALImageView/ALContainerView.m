@@ -187,6 +187,15 @@ UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
         _imageViews = [[NSMutableArray alloc] init];
     }
     
+    if (count <= [_imageViews count]) {
+        while (count < [_imageViews count]) {
+            ALImageView *alImageView = [_imageViews lastObject];
+            [alImageView removeFromSuperview];
+            [_imageViews removeObject:alImageView];
+        }
+        return;
+    }
+    
     while (count > [_imageViews count]) {
         ALImageView *alImageView = [[ALImageView alloc] initWithFrame:CGRectZero];
         alImageView.placeholderImage = [UIImage imageNamed:@"img_pld"];
@@ -194,12 +203,6 @@ UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
         alImageView.isCorner = YES;
         [alImageView addTarget:self action:@selector(didPressImageViewAction:)];
         [_imageViews addObject:alImageView];
-    }
-
-    while (count < [_imageViews count]) {
-        ALImageView *alImageView = [_imageViews lastObject];
-        [alImageView removeFromSuperview];
-        [_imageViews removeObject:alImageView];
     }
     
     [self layoutImageViews];

@@ -55,7 +55,7 @@ const NSString * LOCAL_CAHCE_DIRECTORY_DEFAULT = @"com.springox.ALImageView";
     
     if (0 < [_localCacheDirectory length]) {
         BOOL isDirectory = YES;
-        if (![[NSFileManager defaultManager] fileExistsAtPath:_localCacheDirectory isDirectory:&isDirectory] && !isDirectory) {
+        if (![[NSFileManager defaultManager] fileExistsAtPath:_localCacheDirectory isDirectory:&isDirectory] || !isDirectory) {  // File is not exist or is not directory
             NSError *error = nil;
             [[NSFileManager defaultManager] createDirectoryAtPath:_localCacheDirectory withIntermediateDirectories:YES attributes:nil error:&error];
         }
