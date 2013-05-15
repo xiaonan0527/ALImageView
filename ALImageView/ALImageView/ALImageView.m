@@ -68,7 +68,8 @@ const NSString * LOCAL_CAHCE_DIRECTORY_DEFAULT = @"com.springox.ALImageView";
     if (nil == img && localEnabled) {
         NSString *localCachePath = [self.localCacheDirectory stringByAppendingPathComponent:[url lastPathComponent]];
         if ([[NSFileManager defaultManager] fileExistsAtPath:localCachePath]) {
-            img = [UIImage imageWithContentsOfFile:localCachePath];
+            NSData *data = [NSData dataWithContentsOfFile:localCachePath];
+            img = [UIImage imageWithData:data];
             [self cacheImage:img forKey:url];
             NSLog(@"cached image localCachePath:%@", localCachePath);
         }
@@ -128,6 +129,8 @@ const NSString * LOCAL_CAHCE_DIRECTORY_DEFAULT = @"com.springox.ALImageView";
 #pragma mark -
 
 const NSTimeInterval REQUEST_TIME_OUT_INTERVAL = 30.f;
+
+const int SLEEP_TIME_INTERVAL = 400;  //milliseconds
 
 const int REQUEST_RETRY_COUNT = 2;
 
@@ -356,7 +359,7 @@ const int REQUEST_RETRY_COUNT = 2;
             NSLog(@"async load image start url:%@ countStamp:%d _taskCount:%d", [request.URL.absoluteString lastPathComponent], countStamp, _taskCount);
             if (0 <= retryCount) {
                 NSLog(@"async load image usleep url:%@ countStamp:%d _taskCount:%d", [request.URL.absoluteString lastPathComponent], countStamp, _taskCount);
-                usleep(500*(retryCount+1));
+                usleep(SLEEP_TIME_INTERVAL*(retryCount+1));
             }
             
             NSURLResponse *response = nil;

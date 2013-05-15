@@ -146,12 +146,12 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    static NSString *CellIdentifier = @"Cell";
+    static NSString *CellIdentifier = @"ListImageCell";
     ListImageCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
         cell = [[[ListImageCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:CellIdentifier] autorelease];
         
-        ALContainerView *imageContainerView = [[[ALContainerView alloc] initWithFrame:CGRectMake(cell.frame.size.width-110.f, 0.f, 100.f, 100.f)] autorelease];
+        ALContainerView *imageContainerView = [[[ALContainerView alloc] initWithFrame:CGRectMake(tableView.frame.size.width-110.f, 0.f, 100.f, 100.f)] autorelease];
         imageContainerView.backgroundColor = [UIColor colorWithWhite:0.f alpha:0.3f];
         imageContainerView.edgeInsets = ALContainerEdgeInsetsMake(4.f, 4.f, 4.f, 4.f);
         imageContainerView.composition = ALContainerCompositionMake(2, 2, 6.f, 6.f);
