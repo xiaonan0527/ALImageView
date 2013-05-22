@@ -22,9 +22,19 @@
 @property (nonatomic, retain) NSCache *memoryCache;
 
 /**
- Set a local cache directory.
+ Set a local cache directory, the default is Caches/com.springox.ALImageView.
  */
 @property (nonatomic, retain) NSString *localCacheDirectory;
+
+/**
+ Set a local cache expired time, the type of the variable is NSTimeInterval, 
+ it is must be greater than or equal to zero.
+ If try to set a negative number, the result will be converted to zero.
+ When the value of the variable is not equal to zero, the operation for clean expired local cache will be
+ execute after receive UIApplicationDidEnterBackgroundNotification.
+ The default is zero.
+ */
+@property (nonatomic, assign) NSTimeInterval localCacheExpiredTime;
 
 /**
  Return image from memory cache,if memory cache unfind and localEnabled equal to YES,

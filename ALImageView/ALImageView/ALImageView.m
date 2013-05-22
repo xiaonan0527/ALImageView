@@ -8,7 +8,9 @@
 
 #import "ALImageView.h"
 
-const NSString * LOCAL_CAHCE_DIRECTORY_DEFAULT = @"com.springox.ALImageView";
+const NSString *const LOCAL_CAHCE_DIRECTORY_DEFAULT = @"com.springox.ALImageView";
+
+const NSTimeInterval LOCAL_CACHE_EXPIRED_TIME_DEFAULT = 0;
 
 @implementation ALImageCache
 
@@ -17,22 +19,47 @@ const NSString * LOCAL_CAHCE_DIRECTORY_DEFAULT = @"com.springox.ALImageView";
     static ALImageCache *_imageCache = nil;
     static dispatch_once_t _oncePredicate;
     dispatch_once(&_oncePredicate, ^{
-        @autoreleasepool {
-            _imageCache = [[ALImageCache alloc] init];
-            _imageCache.memoryCache = [[[NSCache alloc] init] autorelease];
-            
-            NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-            NSString *cachesPath = ([paths count] > 0) ? [paths objectAtIndex:0] : nil;
-            if (0 < [cachesPath length]) {
-                _imageCache.localCacheDirectory = [cachesPath stringByAppendingPathComponent:(NSString *)LOCAL_CAHCE_DIRECTORY_DEFAULT];
-            }
-        }
+        _imageCache = [[ALImageCache alloc] init];
     });
     return _imageCache;
 }
 
+- (id)init
+{
+    self = [super init];
+    if (self) {
+        [self commonInit];
+    }
+    return self;
+}
+
+- (void)commonInit
+{
+    @autoreleasepool {
+        self.memoryCache = [[[NSCache alloc] init] autorelease];
+        
+        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
+        NSString *cachesPath = ([paths count] > 0) ? [paths objectAtIndex:0] : nil;
+        if (0 < [cachesPath length]) {
+            self.localCacheDirectory = [cachesPath stringByAppendingPathComponent:(NSString *)LOCAL_CAHCE_DIRECTORY_DEFAULT];
+        }
+        
+        self.localCacheExpiredTime = LOCAL_CACHE_EXPIRED_TIME_DEFAULT;
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(cleanAllMemoryCache)
+                                                     name:UIApplicationDidReceiveMemoryWarningNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(cleanExpiredLocalCache)
+                                                     name:UIApplicationDidEnterBackgroundNotification
+                                                   object:nil];
+    }
+}
+
 - (void)dealloc
 {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     self.memoryCache = nil;
     self.localCacheDirectory = nil;
     [super dealloc];
@@ -62,16 +89,25 @@ const NSString * LOCAL_CAHCE_DIRECTORY_DEFAULT = @"com.springox.ALImageView";
     }
 }
 
+- (void)setLocalCacheExpiredTime:(NSTimeInterval)localCacheExpiredTime
+{
+    if (0 >= localCacheExpiredTime) {
+        _localCacheExpiredTime = 0;
+    } else {
+        _localCacheExpiredTime = localCacheExpiredTime;
+    }
+}
+
 - (UIImage *)cachedImageForImageURL:(NSString *)url fromLocal:(BOOL)localEnabled
 {
     UIImage *img = [self cachedImageForKey:url];
-    if (nil == img && localEnabled) {
-        NSString *localCachePath = [self.localCacheDirectory stringByAppendingPathComponent:[url lastPathComponent]];
+    if (nil == img && localEnabled && nil != _localCacheDirectory) {
+        NSString *localCachePath = [_localCacheDirectory stringByAppendingPathComponent:[url lastPathComponent]];
         if ([[NSFileManager defaultManager] fileExistsAtPath:localCachePath]) {
             NSData *data = [NSData dataWithContentsOfFile:localCachePath];
             img = [UIImage imageWithData:data];
             [self cacheImage:img forKey:url];
-            NSLog(@"cached image localCachePath:%@", localCachePath);
+            NSLog(@"cached image local cache path:%@", localCachePath);
         }
     }
 	return img;
@@ -81,11 +117,11 @@ const NSString * LOCAL_CAHCE_DIRECTORY_DEFAULT = @"com.springox.ALImageView";
 {
     UIImage *img = [UIImage imageWithData:data];
     [self cacheImage:img forKey:url];
-    if (localEnabled) {
-        NSString *localCachePath = [self.localCacheDirectory stringByAppendingPathComponent:[url lastPathComponent]];
+    if (localEnabled && nil != _localCacheDirectory) {
+        NSString *localCachePath = [_localCacheDirectory stringByAppendingPathComponent:[url lastPathComponent]];
         NSError *error = nil;
         [data writeToFile:localCachePath options:NSDataWritingFileProtectionComplete error:&error];
-        NSLog(@"cache image localCachePath:%@ error:%@", localCachePath, error);
+        NSLog(@"cache image local cache path:%@ error:%@", localCachePath, error);
     }
     return img;
 }
@@ -93,13 +129,16 @@ const NSString * LOCAL_CAHCE_DIRECTORY_DEFAULT = @"com.springox.ALImageView";
 - (BOOL)clearCache
 {
     NSFileManager *fm = [NSFileManager defaultManager];
-    NSError *error = nil;
 
+    NSError *error = nil;
     NSArray *contents = [fm contentsOfDirectoryAtPath:_localCacheDirectory error:&error];
-    for(NSString *itemName in contents){
-        NSString *fullPathName = [_localCacheDirectory stringByAppendingPathComponent:itemName];
-        error = nil;
-        [fm removeItemAtPath:fullPathName error:&error];
+    @autoreleasepool {
+        for (NSString *itemName in contents) {
+            NSString *absolutePath = [_localCacheDirectory stringByAppendingPathComponent:itemName];
+            error = nil;
+            [fm removeItemAtPath:absolutePath error:&error];
+            NSLog(@"remove file for clear cache error:%@", error);
+        }
     }
     if (nil == error) {
         [self.memoryCache removeAllObjects];
@@ -123,6 +162,48 @@ const NSString * LOCAL_CAHCE_DIRECTORY_DEFAULT = @"com.springox.ALImageView";
     }
 }
 
+- (void)cleanAllMemoryCache
+{
+    [self.memoryCache removeAllObjects];
+}
+
+- (void)cleanExpiredLocalCache
+{
+    if (_localCacheExpiredTime <= 0) {
+        return;
+    }
+    
+    NSFileManager *fm = [NSFileManager defaultManager];
+    
+    NSURL *localCacheDirURL = [NSURL fileURLWithPath:_localCacheDirectory isDirectory:YES];
+    NSArray *resourceKeys = @[NSURLIsDirectoryKey, NSURLContentModificationDateKey];
+    
+    NSDirectoryEnumerator *fileEnumerator = [fm enumeratorAtURL:localCacheDirURL
+                                     includingPropertiesForKeys:resourceKeys
+                                                        options:NSDirectoryEnumerationSkipsHiddenFiles
+                                                   errorHandler:^BOOL(NSURL *url, NSError *error) {
+                                                       return YES;
+                                                   }];
+    NSError *error = nil;
+    for (NSURL *fileURL in fileEnumerator) {
+        @autoreleasepool {
+            NSDictionary *resourceValues = [fileURL resourceValuesForKeys:resourceKeys error:NULL];
+            // Skip directories.
+            if ([resourceValues[NSURLIsDirectoryKey] boolValue])
+            {
+                continue;
+            }
+            // Remove files that are older than the expiration date;
+            NSDate *modificationDate = resourceValues[NSURLContentModificationDateKey];
+            if (_localCacheExpiredTime <= -[modificationDate timeIntervalSinceNow])
+            {
+                error = nil;
+                [fm removeItemAtURL:fileURL error:&error];
+                NSLog(@"remove file for clean expired local cache %f error:%@", [modificationDate timeIntervalSinceNow], error);
+            }
+        }
+    }
+}
 
 @end
 
@@ -213,7 +294,6 @@ const int REQUEST_RETRY_COUNT = 2;
             _placeholderImage = [placeholderImage retain];
         }
     }
-    
     self.image = _placeholderImage;
 }
 
@@ -321,7 +401,7 @@ const int REQUEST_RETRY_COUNT = 2;
 {
     [self setImageWithPlaceholder:img];
     
-    self.alpha = 0.3f;
+    self.alpha = 0.6f;
     [UIView animateWithDuration:0.32f
                           delay:0.16f
                         options:UIViewAnimationOptionCurveLinear
@@ -404,7 +484,7 @@ const int REQUEST_RETRY_COUNT = 2;
         static dispatch_queue_t imageQueue = NULL;
         
         if (NULL == imageQueue) {
-            imageQueue = dispatch_queue_create("asynchronous_load_image", nil);
+            imageQueue = dispatch_queue_create("com.springox.ALImageView.image_queue", nil);
         }
         dispatch_async(imageQueue, loadImageBlock);
     }
