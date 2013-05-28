@@ -72,6 +72,11 @@ typedef void (^CSelectIndexBlock)(ALContainerView *cView, NSInteger index);
 @property (nonatomic, assign) NSInteger groupTag;
 
 /**
+ Set a placeholder for image group in the container view.
+ */
+@property (nonatomic, retain) UIImage *groupPlaceholder;
+
+/**
  The image views in the container view.
  */
 @property (nonatomic, retain, readonly) NSMutableArray *imageViews;

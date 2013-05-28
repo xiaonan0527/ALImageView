@@ -156,6 +156,7 @@
         imageContainerView.edgeInsets = ALContainerEdgeInsetsMake(4.f, 4.f, 4.f, 4.f);
         imageContainerView.composition = ALContainerCompositionMake(2, 2, 6.f, 6.f);
         imageContainerView.isCorner = YES;
+        imageContainerView.groupPlaceholder = [UIImage imageNamed:@"img_pld"];
         [cell.contentView addSubview:imageContainerView];
         
         cell.containerView = imageContainerView;

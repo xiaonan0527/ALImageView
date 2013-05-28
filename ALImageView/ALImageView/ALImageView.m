@@ -9,8 +9,7 @@
 #import "ALImageView.h"
 
 const NSString *const LOCAL_CAHCE_DIRECTORY_DEFAULT = @"com.springox.ALImageView";
-
-const NSTimeInterval LOCAL_CACHE_EXPIRED_TIME_DEFAULT = 0;
+const NSTimeInterval LOCAL_CACHE_EXPIRED_TIME_DEFAULT = 10;
 
 @implementation ALImageCache
 
@@ -57,6 +56,31 @@ const NSTimeInterval LOCAL_CACHE_EXPIRED_TIME_DEFAULT = 0;
     }
 }
 
+- (id)copyWithZone:(NSZone *)zone
+{
+    return self;
+}
+
+- (id)retain
+{
+    return self;
+}
+
+- (unsigned)retainCount
+{
+    return UINT_MAX;  //denotes an object that cannot be released
+}
+
+- (oneway void)release
+{
+    //do nothing
+}
+
+- (id)autorelease
+{
+    return self;
+}
+
 - (void)dealloc
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -65,7 +89,7 @@ const NSTimeInterval LOCAL_CACHE_EXPIRED_TIME_DEFAULT = 0;
     [super dealloc];
 }
 
-#pragma mark ALImageCache (public)
+#pragma mark ALImageCache (@public)
 
 - (void)setLocalCacheDirectory:(NSString *)localCacheDirectory
 {
@@ -148,7 +172,7 @@ const NSTimeInterval LOCAL_CACHE_EXPIRED_TIME_DEFAULT = 0;
     }
 }
 
-#pragma mark ALImageCache (private)
+#pragma mark ALImageCache (@private)
 
 - (UIImage *)cachedImageForKey:(NSString *)key
 {
@@ -172,6 +196,15 @@ const NSTimeInterval LOCAL_CACHE_EXPIRED_TIME_DEFAULT = 0;
     if (_localCacheExpiredTime <= 0) {
         return;
     }
+    
+    __block UIBackgroundTaskIdentifier bgTaskIdentifier = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
+        // End the background task when expiration.
+        if (UIBackgroundTaskInvalid != bgTaskIdentifier) {
+            [[UIApplication sharedApplication] endBackgroundTask:bgTaskIdentifier];
+            bgTaskIdentifier = UIBackgroundTaskInvalid;
+            NSLog(@"end the background task when expiration");
+        }
+    }];
     
     NSFileManager *fm = [NSFileManager defaultManager];
     
@@ -203,6 +236,13 @@ const NSTimeInterval LOCAL_CACHE_EXPIRED_TIME_DEFAULT = 0;
             }
         }
     }
+    
+    // End the background task with clean expired local cache.
+    if (UIBackgroundTaskInvalid != bgTaskIdentifier) {
+        [[UIApplication sharedApplication] endBackgroundTask:bgTaskIdentifier];
+        bgTaskIdentifier = UIBackgroundTaskInvalid;
+        NSLog(@"end the background task with clean expired local cache");
+    }
 }
 
 @end
@@ -210,9 +250,7 @@ const NSTimeInterval LOCAL_CACHE_EXPIRED_TIME_DEFAULT = 0;
 #pragma mark -
 
 const NSTimeInterval REQUEST_TIME_OUT_INTERVAL = 30.f;
-
 const int SLEEP_TIME_INTERVAL = 400;  //milliseconds
-
 const int REQUEST_RETRY_COUNT = 2;
 
 @interface ALImageView ()
@@ -251,13 +289,14 @@ const int REQUEST_RETRY_COUNT = 2;
 
 - (void)commonInit
 {
-    self.backgroundColor = [UIColor whiteColor];
+//    self.backgroundColor = [UIColor whiteColor];
     
     _contentEdgeInsets = UIEdgeInsetsZero;
     _index = -UINT_MAX;
     _queuePriority = ALImageQueuePriorityNormal;
     _localCacheEnabled = YES;
     _indicatorEnabled = YES;
+    _asyncLoadImageFinished = YES;
 }
 
 - (void)dealloc
@@ -271,7 +310,7 @@ const int REQUEST_RETRY_COUNT = 2;
     [super dealloc];
 }
 
-#pragma mark ALImageView (public)
+#pragma mark ALImageView (@public)
 
 /*
  // Only override drawRect: if you perform custom drawing.
@@ -321,8 +360,13 @@ const int REQUEST_RETRY_COUNT = 2;
             [self setImageWithPlaceholder:img];
             return;
         }
+        
+        _asyncLoadImageFinished = NO;
         [self asyncLoadImageWithURL:[NSURL URLWithString:[_imageURL stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]]];
-        NSLog(@"load image from remote server!");
+        NSLog(@"set load image finished tag is NO!");
+    } else {
+        _asyncLoadImageFinished = YES;
+        NSLog(@"set load image finished tag is YES!");
     }
 }
 
@@ -366,7 +410,7 @@ const int REQUEST_RETRY_COUNT = 2;
     [gestureRecognizer release];
 }
 
-#pragma mark ALImageView (private)
+#pragma mark ALImageView (@private)
 
 - (UIImage *)insertBgImage:(UIImage *)bgImage toImage:(UIImage *)image
 {
@@ -401,7 +445,11 @@ const int REQUEST_RETRY_COUNT = 2;
 {
     [self setImageWithPlaceholder:img];
     
-    self.alpha = 0.6f;
+    if (nil != _placeholderImage) {
+        self.alpha = 0.6f;
+    } else {
+        self.alpha = 0.f;
+    }
     [UIView animateWithDuration:0.32f
                           delay:0.16f
                         options:UIViewAnimationOptionCurveLinear
@@ -424,7 +472,6 @@ const int REQUEST_RETRY_COUNT = 2;
     }
     [_activityView startAnimating];
     
-    _asyncLoadImageFinished = NO;
     _taskCount++;
     
     NSInteger countStamp = _taskCount;
@@ -433,44 +480,47 @@ const int REQUEST_RETRY_COUNT = 2;
         NSData *data = nil;
         UIImage *img = nil;
         
-        NSURLRequest *request = [NSURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:REQUEST_TIME_OUT_INTERVAL];
-        int retryCount = -1;
-        while (REQUEST_RETRY_COUNT > retryCount && countStamp == _taskCount) {
-            NSLog(@"async load image start url:%@ countStamp:%d _taskCount:%d", [request.URL.absoluteString lastPathComponent], countStamp, _taskCount);
-            if (0 <= retryCount) {
-                NSLog(@"async load image usleep url:%@ countStamp:%d _taskCount:%d", [request.URL.absoluteString lastPathComponent], countStamp, _taskCount);
-                usleep(SLEEP_TIME_INTERVAL*(retryCount+1));
+        if (!_asyncLoadImageFinished) {
+            NSURLRequest *request = [NSURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:REQUEST_TIME_OUT_INTERVAL];
+            int retryCount = -1;
+            while (!_asyncLoadImageFinished && REQUEST_RETRY_COUNT > retryCount && countStamp == _taskCount) {
+                NSLog(@"async load image start url:%@ countStamp:%d _taskCount:%d", [request.URL.absoluteString lastPathComponent], countStamp, _taskCount);
+                if (0 <= retryCount) {
+                    NSLog(@"async load image usleep url:%@ countStamp:%d _taskCount:%d", [request.URL.absoluteString lastPathComponent], countStamp, _taskCount);
+                    usleep(SLEEP_TIME_INTERVAL*(retryCount+1));
+                }
+                
+                NSURLResponse *response = nil;
+                NSError *error = nil;
+                data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
+                retryCount++;
+                NSLog(@"async load image retry count:%d expected length:%lld", retryCount, response.expectedContentLength);
+                
+                if (nil == error &&
+                    0 < response.expectedContentLength &&
+                    response.expectedContentLength == [data length]) {  // Tested may return the length of the data is empty or less
+                    img = [[ALImageCache sharedInstance] cacheImageWithData:data forImageURL:[url absoluteString] toLocal:_localCacheEnabled];
+                    break;
+                } else {
+                    data = nil;
+                }
+                NSLog(@"async load image end url:%@ countStamp:%d _taskCount:%d dataLength:%d", [self.imageURL lastPathComponent], countStamp, _taskCount, [data length]);
             }
-            
-            NSURLResponse *response = nil;
-            NSError *error = nil;
-            data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
-            retryCount++;
-            NSLog(@"async load image retry count:%d expected length:%lld", retryCount, response.expectedContentLength);
-            
-            if (nil == error &&
-                0 < response.expectedContentLength &&
-                response.expectedContentLength == [data length]) {  // Tested may return the length of the data is empty or less
-                img = [[ALImageCache sharedInstance] cacheImageWithData:data forImageURL:[url absoluteString] toLocal:_localCacheEnabled];
-                break;
-            } else {
-                data = nil;
-            }
-            NSLog(@"async load image end url:%@ countStamp:%d _taskCount:%d dataLength:%d", [self.imageURL lastPathComponent], countStamp, _taskCount, [data length]);
+        } else {
+            NSLog(@"async load image not start!");
         }
         
         dispatch_async(dispatch_get_main_queue(), ^{
             
+            _asyncLoadImageFinished = YES;
+            [_activityView stopAnimating];
+            
             if (nil != img) {
                 if (countStamp == _taskCount) {   // Add the count to reload a picture when the object is complex,the old block, in effect, equivalent cancel
                     [self setImageWithAnimation:img];
-                    _asyncLoadImageFinished = YES;
-                    [_activityView stopAnimating];
                     NSLog(@"async load image finish!");
                 }
             } else {
-                _asyncLoadImageFinished = NO;
-                [_activityView stopAnimating];
                 NSLog(@"async load image finish without set image!");
             }
         });

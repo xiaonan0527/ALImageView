@@ -98,8 +98,8 @@ UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
 
 - (void)commonInit
 {
-    self.edgeInsets = ALContainerEdgeInsetsMake(20.f, 20.f, 20.f, 20.f);
-    self.composition = ALContainerCompositionMake(2, 3, 20.f, 16.f);
+    _edgeInsets = ALContainerEdgeInsetsMake(20.f, 20.f, 20.f, 20.f);
+    _composition = ALContainerCompositionMake(2, 3, 20.f, 16.f);
     _groupTag = -UINT_MAX;
 }
 
@@ -198,7 +198,7 @@ UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
     
     while (count > [_imageViews count]) {
         ALImageView *alImageView = [[ALImageView alloc] initWithFrame:CGRectZero];
-        alImageView.placeholderImage = [UIImage imageNamed:@"img_pld"];
+        alImageView.placeholderImage = self.groupPlaceholder;
         alImageView.contentEdgeInsets = UIEdgeInsetsMake(3.f, 4.f, 3.f, 4.f);
         alImageView.isCorner = YES;
         [alImageView addTarget:self action:@selector(didPressImageViewAction:)];

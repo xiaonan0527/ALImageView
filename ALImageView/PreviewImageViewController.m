@@ -153,8 +153,8 @@
     CGFloat y = 10.f;
     CGFloat width = bounds.size.width-20.f;
     CGFloat height = bounds.size.height-40.f;
-    NSLog(@"%s previewcontrollerself  retain count %d; self.navigationController retain count %d;", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
     
+    NSLog(@"%s previewcontrollerself  retain count %d; self.navigationController retain count %d;", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
     // It will lead to retain cycles!!!
 //    CSelectIndexBlock block = ^(ALContainerView *icView, NSInteger index) {
 //        NSLog(@"block didSelectIndex:%d", icView.fromIndex+index);
@@ -164,11 +164,11 @@
 //        [(__unsafe_unretained id)self.navigationController pushViewController:originalImageVC animated:YES];
 //        [originalImageVC release];
 //    };
-    
+
+    // Create container group.
     if (nil == _containerViews) {
         _containerViews = [[NSMutableArray alloc] init];
     }
-
     int tempCount = [_containerViews count];
     for (int i=0; i<PageCount([_imageInfos count], PreviewImageViewControllerContainerImageCount); i++) {
         ALContainerView *imageContainerView = nil;
@@ -196,6 +196,7 @@
         }
     }
     
+    // Set views status for layout.
     for (ALContainerView *imageContainerView in _containerViews) {
         if (imageContainerView.tag == 1) {
             imageContainerView.hidden = NO;
@@ -208,6 +209,7 @@
     _scrollView.contentOffset = CGPointMake(0.f, 0.f);
     [self updatePageNumber];
     
+    // Set image count for container.
     int i = 0;
     for (ALContainerView *imageContainerView in _containerViews) {
         if (1 == imageContainerView.tag) {
@@ -221,6 +223,7 @@
         }
     }
     
+    // Reload images for container.
     [self reloadContainerViews:_fromIndex];
 }
 
