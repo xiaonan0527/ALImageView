@@ -5,6 +5,8 @@
 //  Created by SpringOx on 12-12-2.
 //  Copyright (c) 2012年 SpringOx. All rights reserved.
 //
+//  Contact:jiachunke@gmail.com
+//
 
 #import "PreviewImageViewController.h"
 #import "OriginalImageViewController.h"

@@ -5,8 +5,32 @@
 //  Created by SpringOx on 12-8-2.
 //  Copyright (c) 2012年 SpringOx. All rights reserved.
 //
+//  Contact:jiachunke@gmail.com
+//
 
 #import "ALImageView.h"
+#import <CommonCrypto/CommonDigest.h>
+
+@interface NSString (MD5)
+
+- (NSString *)MD5EncodedString;
+
+@end
+
+@implementation NSString (MD5)
+
+- (NSString *)MD5EncodedString
+{
+    NSData *data = [self dataUsingEncoding:NSUTF8StringEncoding];
+    unsigned char result[CC_MD5_DIGEST_LENGTH];
+    CC_MD5([data bytes], [data length], result);
+    
+    return [NSString stringWithFormat:@"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+            result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7],
+            result[8], result[9], result[10], result[11], result[12], result[13], result[14], result[15]];
+}
+
+@end
 
 const NSString *const LOCAL_CAHCE_DIRECTORY_DEFAULT = @"com.springox.ALImageView";
 const NSTimeInterval LOCAL_CACHE_EXPIRED_TIME_DEFAULT = 10;
@@ -126,7 +150,7 @@ const NSTimeInterval LOCAL_CACHE_EXPIRED_TIME_DEFAULT = 10;
 {
     UIImage *img = [self cachedImageForKey:url];
     if (nil == img && localEnabled && nil != _localCacheDirectory) {
-        NSString *localCachePath = [_localCacheDirectory stringByAppendingPathComponent:[url lastPathComponent]];
+        NSString *localCachePath = [_localCacheDirectory stringByAppendingPathComponent:[url MD5EncodedString]];
         if ([[NSFileManager defaultManager] fileExistsAtPath:localCachePath]) {
             NSData *data = [NSData dataWithContentsOfFile:localCachePath];
             img = [UIImage imageWithData:data];
@@ -142,7 +166,7 @@ const NSTimeInterval LOCAL_CACHE_EXPIRED_TIME_DEFAULT = 10;
     UIImage *img = [UIImage imageWithData:data];
     [self cacheImage:img forKey:url];
     if (localEnabled && nil != _localCacheDirectory) {
-        NSString *localCachePath = [_localCacheDirectory stringByAppendingPathComponent:[url lastPathComponent]];
+        NSString *localCachePath = [_localCacheDirectory stringByAppendingPathComponent:[url MD5EncodedString]];
         NSError *error = nil;
         [data writeToFile:localCachePath options:NSDataWritingFileProtectionComplete error:&error];
         NSLog(@"cache image local cache path:%@ error:%@", localCachePath, error);
@@ -207,7 +231,6 @@ const NSTimeInterval LOCAL_CACHE_EXPIRED_TIME_DEFAULT = 10;
     }];
     
     NSFileManager *fm = [NSFileManager defaultManager];
-    
     NSURL *localCacheDirURL = [NSURL fileURLWithPath:_localCacheDirectory isDirectory:YES];
     NSArray *resourceKeys = @[NSURLIsDirectoryKey, NSURLContentModificationDateKey];
     
@@ -220,6 +243,8 @@ const NSTimeInterval LOCAL_CACHE_EXPIRED_TIME_DEFAULT = 10;
     NSError *error = nil;
     for (NSURL *fileURL in fileEnumerator) {
         @autoreleasepool {
+            
+            // Copy from SDWebImage.
             NSDictionary *resourceValues = [fileURL resourceValuesForKeys:resourceKeys error:NULL];
             // Skip directories.
             if ([resourceValues[NSURLIsDirectoryKey] boolValue])
@@ -234,6 +259,7 @@ const NSTimeInterval LOCAL_CACHE_EXPIRED_TIME_DEFAULT = 10;
                 [fm removeItemAtURL:fileURL error:&error];
                 NSLog(@"remove file for clean expired local cache %f error:%@", [modificationDate timeIntervalSinceNow], error);
             }
+            // --Copy from SDWebImage.
         }
     }
     
@@ -445,18 +471,16 @@ const int REQUEST_RETRY_COUNT = 2;
 {
     [self setImageWithPlaceholder:img];
     
-    if (nil != _placeholderImage) {
-        self.alpha = 0.6f;
-    } else {
+    if (nil == _placeholderImage) {
         self.alpha = 0.f;
+        [UIView animateWithDuration:1.2f
+                              delay:0.f
+                            options:UIViewAnimationOptionCurveEaseOut
+                         animations:^{
+                             self.alpha = 1.f;
+                         }
+                         completion:nil];
     }
-    [UIView animateWithDuration:0.32f
-                          delay:0.16f
-                        options:UIViewAnimationOptionCurveLinear
-                     animations:^{
-                         self.alpha = 1.f;
-                     }
-                     completion:nil];
 }
 
 - (void)asyncLoadImageWithURL:(NSURL *)url
@@ -479,7 +503,6 @@ const int REQUEST_RETRY_COUNT = 2;
         
         NSData *data = nil;
         UIImage *img = nil;
-        
         if (!_asyncLoadImageFinished) {
             NSURLRequest *request = [NSURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:REQUEST_TIME_OUT_INTERVAL];
             int retryCount = -1;
@@ -515,11 +538,9 @@ const int REQUEST_RETRY_COUNT = 2;
             _asyncLoadImageFinished = YES;
             [_activityView stopAnimating];
             
-            if (nil != img) {
-                if (countStamp == _taskCount) {   // Add the count to reload a picture when the object is complex,the old block, in effect, equivalent cancel
-                    [self setImageWithAnimation:img];
-                    NSLog(@"async load image finish!");
-                }
+            if (nil != img && countStamp == _taskCount) {  // Add the count to reload a picture when the object is complex,the old block, in effect, equivalent cancel
+                [self setImageWithAnimation:img];
+                NSLog(@"async load image finish!");
             } else {
                 NSLog(@"async load image finish without set image!");
             }
