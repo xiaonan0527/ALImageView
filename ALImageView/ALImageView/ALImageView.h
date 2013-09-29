@@ -34,7 +34,7 @@
  If try to set a negative number, the result will be converted to zero.
  When the value of the variable is not equal to zero, the operation for clean expired local cache will be
  execute after receive UIApplicationDidEnterBackgroundNotification.
- The default is zero.
+ The default is 10.
  */
 @property (nonatomic, assign) NSTimeInterval localCacheExpiredTime;
 

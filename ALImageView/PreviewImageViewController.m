@@ -155,7 +155,11 @@
     CGFloat y = 10.f;
     CGFloat width = bounds.size.width-20.f;
     CGFloat height = bounds.size.height-40.f;
-    
+    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7.0) {
+        y += self.navigationController.navigationBar.frame.size.height;
+        height -= self.navigationController.navigationBar.frame.size.height;
+    }
+
     NSLog(@"%s previewcontrollerself  retain count %d; self.navigationController retain count %d;", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
     // It will lead to retain cycles!!!
 //    CSelectIndexBlock block = ^(ALContainerView *icView, NSInteger index) {

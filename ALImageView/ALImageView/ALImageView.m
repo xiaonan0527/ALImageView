@@ -383,7 +383,9 @@ const int REQUEST_RETRY_COUNT = 2;
     if (0 < [_imageURL length]) {
         UIImage *img = [[ALImageCache sharedInstance] cachedImageForImageURL:_imageURL fromLocal:_localCacheEnabled];
         if (nil != img) {
+            _asyncLoadImageFinished = YES;
             [self setImageWithPlaceholder:img];
+            NSLog(@"set load image finished tag is YES because cache is not nil!");
             return;
         }
         
@@ -392,7 +394,7 @@ const int REQUEST_RETRY_COUNT = 2;
         NSLog(@"set load image finished tag is NO!");
     } else {
         _asyncLoadImageFinished = YES;
-        NSLog(@"set load image finished tag is YES!");
+        NSLog(@"set load image finished tag is YES because image url length is zero!");
     }
 }
 
