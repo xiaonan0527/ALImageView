@@ -505,7 +505,9 @@ const int REQUEST_RETRY_COUNT = 2;
         
         NSData *data = nil;
         UIImage *img = nil;
-        if (!_asyncLoadImageFinished) {
+        // if task is not current task, give up and release resources, springox(20140302)
+        //if (!_asyncLoadImageFinished) {
+        if (!_asyncLoadImageFinished && countStamp == _taskCount) {
             NSURLRequest *request = [NSURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:REQUEST_TIME_OUT_INTERVAL];
             int retryCount = -1;
             while (!_asyncLoadImageFinished && REQUEST_RETRY_COUNT > retryCount && countStamp == _taskCount) {
@@ -532,7 +534,7 @@ const int REQUEST_RETRY_COUNT = 2;
                 NSLog(@"async load image end url:%@ countStamp:%d _taskCount:%d dataLength:%d", [self.imageURL lastPathComponent], countStamp, _taskCount, [data length]);
             }
         } else {
-            NSLog(@"async load image not start!");
+            NSLog(@"async load image not start countStamp:%d _taskCount:%d", countStamp, _taskCount);
         }
         
         dispatch_async(dispatch_get_main_queue(), ^{
