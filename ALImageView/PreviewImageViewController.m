@@ -161,15 +161,17 @@
     }
 
     NSLog(@"%s previewcontrollerself  retain count %d; self.navigationController retain count %d;", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
+    /*
     // It will lead to retain cycles!!!
-//    CSelectIndexBlock block = ^(ALContainerView *icView, NSInteger index) {
-//        NSLog(@"block didSelectIndex:%d", icView.fromIndex+index);
-//        OriginalImageViewController *originalImageVC = [[OriginalImageViewController alloc] init];
-//        NSDictionary *dic = [(__unsafe_unretained id)_imageInfos objectAtIndex:icView.fromIndex+index];
-//        originalImageVC.path = [dic objectForKey:@"RemoteOriginal"];
-//        [(__unsafe_unretained id)self.navigationController pushViewController:originalImageVC animated:YES];
-//        [originalImageVC release];
-//    };
+    CSelectIndexBlock block = ^(ALContainerView *icView, NSInteger index) {
+        NSLog(@"block didSelectIndex:%d", icView.fromIndex+index);
+        OriginalImageViewController *originalImageVC = [[OriginalImageViewController alloc] init];
+        NSDictionary *dic = [(__unsafe_unretained id)_imageInfos objectAtIndex:icView.fromIndex+index];
+        originalImageVC.path = [dic objectForKey:@"RemoteOriginal"];
+        [(__unsafe_unretained id)self.navigationController pushViewController:originalImageVC animated:YES];
+        [originalImageVC release];
+    };
+     */
 
     // Create container group.
     if (nil == _containerViews) {
@@ -187,7 +189,7 @@
             imageContainerView.composition = ALContainerCompositionMake(2, 3, 20.f, 16.f);
             imageContainerView.isCorner = YES;
             imageContainerView.delegate = self;
-//            [imageContainerView setSelectIndexBlock:block];
+            //[imageContainerView setSelectIndexBlock:block];
             [_containerViews addObject:imageContainerView];
             [_scrollView addSubview:imageContainerView];
         }
