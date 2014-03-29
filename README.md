@@ -2,7 +2,7 @@
 
 A ImageView Class for loading image concurrently in iOS.You only need two source files(ALImageView.h/ALImageView.m).You can reuse a image view to reload different url in a tableview cell.
 
-![Screenshot](https://www.dropbox.com/s/pax83ahgao4sclk/ALImageView.png)
+![Screenshot](https://dl.dropboxusercontent.com/u/59801943/Screenshots/ALImageView.png)
 
 Support local and memory cache;
 Support place holder;
