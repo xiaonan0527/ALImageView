@@ -156,8 +156,8 @@
     CGFloat width = bounds.size.width-20.f;
     CGFloat height = bounds.size.height-40.f;
     if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7.0) {
-        y += self.navigationController.navigationBar.frame.size.height;
-        height -= self.navigationController.navigationBar.frame.size.height;
+        y += self.navigationController.navigationBar.frame.size.height+20.f;
+        height -= self.navigationController.navigationBar.frame.size.height+20.f;
     }
 
     NSLog(@"%s previewcontrollerself  retain count %d; self.navigationController retain count %d;", __FUNCTION__, [self retainCount], [self.navigationController retainCount]);
@@ -185,8 +185,11 @@
         } else {
             imageContainerView = [[ALContainerView alloc] initWithFrame:CGRectMake(i*bounds.size.width+x, y, width, height)];
             imageContainerView.backgroundColor = [UIColor colorWithWhite:0.f alpha:0.3f];
-            imageContainerView.edgeInsets = ALContainerEdgeInsetsMake(14.f, 22.f, 14.f, 22.f);
-            imageContainerView.composition = ALContainerCompositionMake(2, 3, 20.f, 16.f);
+            imageContainerView.edgeInsets = ALContainerEdgeInsetsMake(24.f, 22.f, 24.f, 22.f);
+            CGFloat gapX = 20;
+            CGFloat itemWidth = ceil((width-2*imageContainerView.edgeInsets.left-gapX)/2);
+            CGFloat gapY = ceil((height-2*imageContainerView.edgeInsets.top-3*itemWidth)/2);
+            imageContainerView.composition = ALContainerCompositionMake(2, 3, gapX, gapY);
             imageContainerView.isCorner = YES;
             imageContainerView.delegate = self;
             //[imageContainerView setSelectIndexBlock:block];

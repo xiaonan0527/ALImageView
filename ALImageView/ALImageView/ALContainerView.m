@@ -52,12 +52,10 @@ UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
 {
     if (_imageURLs != imageURLs) {
         if (nil != _imageURLs) {
-            NSUInteger tempCount = [_imageViews count];
+            NSUInteger viewCount = [_imageViews count];
+            NSUInteger urlCount = [_imageURLs count];
             int i = 0;
-            for (NSString *u in _imageURLs) {
-                if (tempCount == i) {
-                    break;
-                }
+            while (viewCount > i && urlCount > i) {
                 ALImageView *view = [_imageViews objectAtIndex:i];
                 view.imageURL = nil;
                 i++;
