@@ -293,6 +293,13 @@ const int REQUEST_RETRY_COUNT = 2;
 
 @implementation ALImageView
 
++ (void)loadImageInTheBackground:(NSString *)imageURL
+{
+    ALImageView *aImageView = [[ALImageView alloc] init];
+    [aImageView loadImage:imageURL placeholderImage:nil];
+    [aImageView release];
+}
+
 - (id)initWithCoder:(NSCoder *)aDecoder
 {
     self = [super initWithCoder:aDecoder];

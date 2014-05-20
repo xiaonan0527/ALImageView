@@ -128,6 +128,15 @@ typedef enum {
 @property (nonatomic, retain) NSDictionary *userInfo;
 
 /**
+ Load image immediately in the background with a image url.
+ 
+ Class method
+ 
+ @param imageURL
+ */
++ (void)loadImageInTheBackground:(NSString *)imageURL;
+
+/**
  Load image immediately with a image url and a place holder image.
  
  @param imageURL 

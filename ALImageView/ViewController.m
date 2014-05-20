@@ -23,6 +23,8 @@
 {
     [super viewDidLoad];
 	// Do any additional setup after loading the view, typically from a nib.
+    
+    [ALImageView loadImageInTheBackground:@"https://www.google.com.hk/images/srpr/logo11w.png"];
 }
 
 - (void)didReceiveMemoryWarning
