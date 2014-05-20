@@ -485,8 +485,20 @@ const int REQUEST_RETRY_COUNT = 2;
     }
 }
 
+- (NSInteger)getTaskCount
+{
+    return _taskCount;
+}
+
+- (UIActivityIndicatorView *)getActivityView
+{
+    return _activityView;
+}
+
 - (void)asyncLoadImageWithURL:(NSURL *)url
 {
+    //return;
+    
     if (_indicatorEnabled && nil == _activityView) {
         if (nil == _placeholderImage) {
             _activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
@@ -507,13 +519,13 @@ const int REQUEST_RETRY_COUNT = 2;
         UIImage *img = nil;
         // if task is not current task, give up and release resources, springox(20140302)
         //if (!_asyncLoadImageFinished) {
-        if (!_asyncLoadImageFinished && countStamp == _taskCount) {
+        if (!self.asyncLoadImageFinished && countStamp == [self getTaskCount]) {
             NSURLRequest *request = [NSURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:REQUEST_TIME_OUT_INTERVAL];
             int retryCount = -1;
-            while (!_asyncLoadImageFinished && REQUEST_RETRY_COUNT > retryCount && countStamp == _taskCount) {
-                NSLog(@"async load image start url:%@ countStamp:%d _taskCount:%d", [request.URL.absoluteString lastPathComponent], countStamp, _taskCount);
+            while (!self.asyncLoadImageFinished && REQUEST_RETRY_COUNT > retryCount && countStamp == [self getTaskCount]) {
+                NSLog(@"async load image start url:%@ countStamp:%d _taskCount:%d", [request.URL.absoluteString lastPathComponent], countStamp, [self getTaskCount]);
                 if (0 <= retryCount) {
-                    NSLog(@"async load image usleep url:%@ countStamp:%d _taskCount:%d", [request.URL.absoluteString lastPathComponent], countStamp, _taskCount);
+                    NSLog(@"async load image usleep url:%@ countStamp:%d _taskCount:%d", [request.URL.absoluteString lastPathComponent], countStamp, [self getTaskCount]);
                     usleep(SLEEP_TIME_INTERVAL*(retryCount+1));
                 }
                 
@@ -526,23 +538,23 @@ const int REQUEST_RETRY_COUNT = 2;
                 if (nil == error &&
                     0 < response.expectedContentLength &&
                     response.expectedContentLength == [data length]) {  // Tested may return the length of the data is empty or less
-                    img = [[ALImageCache sharedInstance] cacheImageWithData:data forImageURL:[url absoluteString] toLocal:_localCacheEnabled];
+                    img = [[ALImageCache sharedInstance] cacheImageWithData:data forImageURL:[url absoluteString] toLocal:self.localCacheEnabled];
                     break;
                 } else {
                     data = nil;
                 }
-                NSLog(@"async load image end url:%@ countStamp:%d _taskCount:%d dataLength:%d", [self.imageURL lastPathComponent], countStamp, _taskCount, [data length]);
+                NSLog(@"async load image end url:%@ countStamp:%d _taskCount:%d dataLength:%d", [self.imageURL lastPathComponent], countStamp, [self getTaskCount], [data length]);
             }
         } else {
-            NSLog(@"async load image not start countStamp:%d _taskCount:%d", countStamp, _taskCount);
+            NSLog(@"async load image not start countStamp:%d _taskCount:%d", countStamp, [self getTaskCount]);
         }
         
         dispatch_async(dispatch_get_main_queue(), ^{
             
-            _asyncLoadImageFinished = YES;
-            [_activityView stopAnimating];
+            self.asyncLoadImageFinished = YES;
+            [[self getActivityView] stopAnimating];
             
-            if (nil != img && countStamp == _taskCount) {  // Add the count to reload a picture when the object is complex,the old block, in effect, equivalent cancel
+            if (nil != img && countStamp == [self getTaskCount]) {  // Add the count to reload a picture when the object is complex,the old block, in effect, equivalent cancel
                 [self setImageWithAnimation:img];
                 NSLog(@"async load image finish!");
             } else {

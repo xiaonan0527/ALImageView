@@ -203,6 +203,7 @@ UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
         alImageView.isCorner = YES;
         [alImageView addTarget:self action:@selector(didPressImageViewAction:)];
         [_imageViews addObject:alImageView];
+        [alImageView release];
     }
     
     [self layoutImageViews];
@@ -219,6 +220,5 @@ UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
 		_selectIndexBlock(self, alImageView.index);
 	}
 }
-
 
 @end
