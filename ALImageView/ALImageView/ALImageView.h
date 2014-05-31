@@ -152,4 +152,9 @@ typedef enum {
  */
 - (void)addTarget:(id)target action:(SEL)action;
 
+/**
+ Cancel current task with asynchronously loading image.
+ */
+- (void)cancelLoading;
+
 @end

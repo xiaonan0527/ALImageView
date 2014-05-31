@@ -107,6 +107,9 @@ UIKIT_STATIC_INLINE NSInteger RowCount(NSInteger count, NSInteger column) {
 {
     self.imageURLs = nil;
     if (nil != _imageViews) {
+        for (ALImageView *imgView in _imageViews) {
+            [imgView cancelLoading];
+        }
         [_imageViews release];
         _imageViews = nil;
     }

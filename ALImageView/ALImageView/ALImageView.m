@@ -322,14 +322,14 @@ const int REQUEST_RETRY_COUNT = 2;
 
 - (void)commonInit
 {
-//    self.backgroundColor = [UIColor whiteColor];
-    
     _contentEdgeInsets = UIEdgeInsetsZero;
     _index = -UINT_MAX;
     _queuePriority = ALImageQueuePriorityNormal;
     _localCacheEnabled = YES;
     _indicatorEnabled = YES;
     _asyncLoadImageFinished = YES;
+    
+    //_queuePriority = ALImageQueuePriorityLow;
 }
 
 - (void)dealloc
@@ -445,6 +445,14 @@ const int REQUEST_RETRY_COUNT = 2;
     [gestureRecognizer release];
 }
 
+- (void)cancelLoading
+{
+    // if the task(async load image) is waitting, _taskCount++ can make the task skip execution, tencent:jiachunke(20140531)
+    _taskCount++;
+    _asyncLoadImageFinished = YES;
+    [_activityView stopAnimating];
+}
+
 #pragma mark ALImageView (@private)
 
 - (UIImage *)insertBgImage:(UIImage *)bgImage toImage:(UIImage *)image
@@ -504,8 +512,6 @@ const int REQUEST_RETRY_COUNT = 2;
 
 - (void)asyncLoadImageWithURL:(NSURL *)url
 {
-    //return;
-    
     if (_indicatorEnabled && nil == _activityView) {
         if (nil == _placeholderImage) {
             _activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
@@ -526,10 +532,10 @@ const int REQUEST_RETRY_COUNT = 2;
         UIImage *img = nil;
         // if task is not current task, give up and release resources, springox(20140302)
         //if (!_asyncLoadImageFinished) {
-        if (!self.asyncLoadImageFinished && countStamp == [self getTaskCount]) {
+        if (countStamp == [self getTaskCount]) {
             NSURLRequest *request = [NSURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:REQUEST_TIME_OUT_INTERVAL];
             int retryCount = -1;
-            while (!self.asyncLoadImageFinished && REQUEST_RETRY_COUNT > retryCount && countStamp == [self getTaskCount]) {
+            while (REQUEST_RETRY_COUNT > retryCount && countStamp == [self getTaskCount]) {
                 NSLog(@"async load image start url:%@ countStamp:%d _taskCount:%d", [request.URL.absoluteString lastPathComponent], countStamp, [self getTaskCount]);
                 if (0 <= retryCount) {
                     NSLog(@"async load image usleep url:%@ countStamp:%d _taskCount:%d", [request.URL.absoluteString lastPathComponent], countStamp, [self getTaskCount]);
@@ -558,15 +564,16 @@ const int REQUEST_RETRY_COUNT = 2;
         
         dispatch_async(dispatch_get_main_queue(), ^{
             
-            self.asyncLoadImageFinished = YES;
-            [[self getActivityView] stopAnimating];
-            
-            if (nil != img && countStamp == [self getTaskCount]) {  // Add the count to reload a picture when the object is complex,the old block, in effect, equivalent cancel
+            if (countStamp == [self getTaskCount]) {  // Add the count to reload a picture when the object is complex,the old block, in effect, equivalent cancel
+                self.asyncLoadImageFinished = YES;
+                [[self getActivityView] stopAnimating];
+                
                 [self setImageWithAnimation:img];
                 NSLog(@"async load image finish!");
             } else {
                 NSLog(@"async load image finish without set image!");
             }
+            
         });
     };
     
