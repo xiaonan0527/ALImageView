@@ -329,7 +329,7 @@ const int REQUEST_RETRY_COUNT = 2;
     _indicatorEnabled = YES;
     _asyncLoadImageFinished = YES;
     
-    _queuePriority = ALImageQueuePriorityLow;
+    //_queuePriority = ALImageQueuePriorityLow;
 }
 
 - (void)dealloc
