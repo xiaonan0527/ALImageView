@@ -329,7 +329,7 @@ const int REQUEST_RETRY_COUNT = 2;
     _indicatorEnabled = YES;
     _asyncLoadImageFinished = YES;
     
-    //_queuePriority = ALImageQueuePriorityLow;
+    _queuePriority = ALImageQueuePriorityLow;
 }
 
 - (void)dealloc
@@ -530,13 +530,17 @@ const int REQUEST_RETRY_COUNT = 2;
         
         NSData *data = nil;
         UIImage *img = nil;
+        
+        // the img has cached when task executing, retrun at once, springox(20140531)
+        img = [[ALImageCache sharedInstance] cachedImageForImageURL:self.imageURL fromLocal:self.localCacheEnabled];
+        
         // if task is not current task, give up and release resources, springox(20140302)
-        //if (!_asyncLoadImageFinished) {
-        if (countStamp == [self getTaskCount]) {
+        if (nil == img && countStamp == [self getTaskCount]) {
             NSURLRequest *request = [NSURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:REQUEST_TIME_OUT_INTERVAL];
             int retryCount = -1;
             while (REQUEST_RETRY_COUNT > retryCount && countStamp == [self getTaskCount]) {
                 NSLog(@"async load image start url:%@ countStamp:%d _taskCount:%d", [request.URL.absoluteString lastPathComponent], countStamp, [self getTaskCount]);
+                
                 if (0 <= retryCount) {
                     NSLog(@"async load image usleep url:%@ countStamp:%d _taskCount:%d", [request.URL.absoluteString lastPathComponent], countStamp, [self getTaskCount]);
                     usleep(SLEEP_TIME_INTERVAL*(retryCount+1));
@@ -546,17 +550,21 @@ const int REQUEST_RETRY_COUNT = 2;
                 NSError *error = nil;
                 data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
                 retryCount++;
+                
                 NSLog(@"async load image retry count:%d expected length:%lld", retryCount, response.expectedContentLength);
                 
                 if (nil == error &&
                     0 < response.expectedContentLength &&
                     response.expectedContentLength == [data length]) {  // Tested may return the length of the data is empty or less
                     img = [[ALImageCache sharedInstance] cacheImageWithData:data forImageURL:[url absoluteString] toLocal:self.localCacheEnabled];
+                    
+                    NSLog(@"async load image success url:%@ countStamp:%d _taskCount:%d dataLength:%d", [self.imageURL lastPathComponent], countStamp, [self getTaskCount], [data length]);
                     break;
                 } else {
                     data = nil;
                 }
-                NSLog(@"async load image end url:%@ countStamp:%d _taskCount:%d dataLength:%d", [self.imageURL lastPathComponent], countStamp, [self getTaskCount], [data length]);
+                
+                NSLog(@"async load image fail url:%@ countStamp:%d _taskCount:%d dataLength:%d", [self.imageURL lastPathComponent], countStamp, [self getTaskCount], [data length]);
             }
         } else {
             NSLog(@"async load image not start countStamp:%d _taskCount:%d", countStamp, [self getTaskCount]);
