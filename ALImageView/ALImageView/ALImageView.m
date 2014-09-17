@@ -488,6 +488,8 @@ const int REQUEST_RETRY_COUNT = 2;
 {
     [self setImageWithPlaceholder:img];
     
+    // optimize the animation, springox(20140917)
+    /*
     if (nil == _placeholderImage) {
         self.alpha = 0.f;
         [UIView animateWithDuration:1.2f
@@ -498,6 +500,13 @@ const int REQUEST_RETRY_COUNT = 2;
                          }
                          completion:nil];
     }
+     */
+    CATransition *animation = [CATransition animation];
+    animation.duration = 0.3f;
+    animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+    animation.type = kCATransitionFade;
+    [self.layer removeAnimationForKey:@"kFadeAnimation"];
+    [self.layer addAnimation:animation forKey:@"kFadeAnimation"];
 }
 
 - (NSInteger)getTaskCount

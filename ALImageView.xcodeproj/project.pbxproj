@@ -24,6 +24,7 @@
 		5406346B166B8FD3001B0257 /* ALContainerView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5406346A166B8FD3001B0257 /* ALContainerView.m */; };
 		54699A961742A0FA00A9B2F1 /* ListImageViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 54699A941742A0FA00A9B2F1 /* ListImageViewController.m */; };
 		54699A971742A0FA00A9B2F1 /* ListImageViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 54699A951742A0FA00A9B2F1 /* ListImageViewController.xib */; };
+		54DB11F019C9DFF8007AEDF7 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 54DB11EF19C9DFF8007AEDF7 /* QuartzCore.framework */; };
 		54F14385166E6E8D0077B8C2 /* img_pld.png in Resources */ = {isa = PBXBuildFile; fileRef = 54F14383166E6E8D0077B8C2 /* img_pld.png */; };
 		54F14386166E6E8D0077B8C2 /* img_pld@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 54F14384166E6E8D0077B8C2 /* img_pld@2x.png */; };
 		54F14390166E70A30077B8C2 /* OriginalImageViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 54F1438E166E70A30077B8C2 /* OriginalImageViewController.m */; };
@@ -57,6 +58,7 @@
 		54699A931742A0FA00A9B2F1 /* ListImageViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ListImageViewController.h; sourceTree = "<group>"; };
 		54699A941742A0FA00A9B2F1 /* ListImageViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ListImageViewController.m; sourceTree = "<group>"; };
 		54699A951742A0FA00A9B2F1 /* ListImageViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ListImageViewController.xib; sourceTree = "<group>"; };
+		54DB11EF19C9DFF8007AEDF7 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		54F14383166E6E8D0077B8C2 /* img_pld.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = img_pld.png; sourceTree = "<group>"; };
 		54F14384166E6E8D0077B8C2 /* img_pld@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "img_pld@2x.png"; sourceTree = "<group>"; };
 		54F1438D166E70A30077B8C2 /* OriginalImageViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OriginalImageViewController.h; sourceTree = "<group>"; };
@@ -72,6 +74,7 @@
 				54063428166B64B2001B0257 /* UIKit.framework in Frameworks */,
 				5406342A166B64B2001B0257 /* Foundation.framework in Frameworks */,
 				5406342C166B64B2001B0257 /* CoreGraphics.framework in Frameworks */,
+				54DB11F019C9DFF8007AEDF7 /* QuartzCore.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -101,6 +104,7 @@
 				54063427166B64B2001B0257 /* UIKit.framework */,
 				54063429166B64B2001B0257 /* Foundation.framework */,
 				5406342B166B64B2001B0257 /* CoreGraphics.framework */,
+				54DB11EF19C9DFF8007AEDF7 /* QuartzCore.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
