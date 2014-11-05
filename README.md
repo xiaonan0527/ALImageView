@@ -1,6 +1,7 @@
 ## ALImageView(图片加载器)
 
 A ImageView Class for loading image concurrently in iOS.You only need two source files(ALImageView.h/ALImageView.m),You can reuse a image view to reload different url in a tableview cell.
+
 一个最轻量的网络图片加载器——一个ImageView类。只需要两个源文件，将可以重用一个image view去加载不同url的图片。
 
 ![Screenshot](https://dl.dropboxusercontent.com/u/59801943/Screenshots/ALImageView.png)
